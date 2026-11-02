@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start backend",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev:backend"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "group": "pastry-dev",
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start frontend",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev:frontend"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "group": "pastry-dev",
+        "panel": "dedicated",
+        "reveal": "always",
+        "focus": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start frontend and backend (split terminals)",
+      "dependsOn": ["Start backend", "Start frontend"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}

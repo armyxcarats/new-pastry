@@ -1,0 +1,285 @@
+.cookie-login-page {
+  --cookie-ink: #38291f;
+  --cookie-cocoa: #653d2c;
+  --cookie-clay: #a84f31;
+  --cookie-cream: #fbf5eb;
+  --cookie-sage: #68735a;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+  max-width: 1180px;
+  min-height: 620px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+  color: var(--cookie-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.cookie-login-story {
+  position: relative;
+  display: flex;
+  min-height: 620px;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: clamp(2rem, 5vw, 4.5rem);
+  background: linear-gradient(180deg, rgba(32, 24, 18, 0.04) 20%, rgba(32, 24, 18, 0.76) 100%),
+    url('https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=1400&q=85') center / cover;
+}
+
+.cookie-login-story-copy {
+  position: relative;
+  max-width: 440px;
+  color: #fffaf1;
+}
+
+.cookie-login-kicker,
+.cookie-login-overline {
+  font-family: Arial, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.cookie-login-kicker {
+  color: #f5d8ac;
+}
+
+.cookie-login-story h1 {
+  max-width: 390px;
+  margin: 1rem 0;
+  font-size: clamp(2.6rem, 5vw, 4.25rem);
+  font-weight: 500;
+  line-height: 1.02;
+}
+
+.cookie-login-story-copy > p {
+  max-width: 350px;
+  margin-bottom: 0;
+  color: #f2e5d6;
+  font-family: Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.cookie-login-stamp {
+  position: absolute;
+  right: -5.5rem;
+  bottom: 1rem;
+  display: grid;
+  width: 92px;
+  aspect-ratio: 1;
+  place-content: center;
+  border: 1px solid rgba(255, 250, 241, 0.75);
+  border-radius: 50%;
+  color: #fffaf1;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  text-align: center;
+  transform: rotate(9deg);
+}
+
+.cookie-login-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2rem, 5vw, 5rem);
+  background: var(--cookie-cream);
+}
+
+.cookie-login-wordmark {
+  width: fit-content;
+  margin-bottom: auto;
+  color: var(--cookie-ink);
+  font-size: 1.55rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cookie-login-wordmark span {
+  color: var(--cookie-clay);
+}
+
+.cookie-login-overline {
+  margin: 3rem 0 0.6rem;
+  color: var(--cookie-sage);
+}
+
+.cookie-login-panel h2 {
+  margin: 0;
+  color: var(--cookie-ink);
+  font-size: 2.5rem;
+  font-weight: 500;
+}
+
+.cookie-login-intro {
+  margin: 0.6rem 0 2rem;
+  color: #76685e;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+}
+
+.cookie-login-field {
+  margin-bottom: 1.25rem;
+}
+
+.cookie-login-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--cookie-ink);
+  font-family: Arial, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.cookie-login-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #d9cbbb;
+  border-radius: 3px;
+  background: #fffdfa;
+  color: var(--cookie-ink);
+  font-family: Arial, sans-serif;
+  font-size: 0.95rem;
+}
+
+.cookie-login-field input:focus {
+  border-color: var(--cookie-sage);
+  outline: 2px solid rgba(104, 115, 90, 0.2);
+}
+
+.cookie-login-password-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cookie-login-password-label a,
+.cookie-login-register a {
+  color: var(--cookie-clay);
+  font-family: Arial, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cookie-login-page form button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 0.5rem;
+  border: 0;
+  border-radius: 3px;
+  background: var(--cookie-cocoa);
+  color: white;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: background-color 160ms ease;
+}
+
+.cookie-login-page form button:hover:not(:disabled) {
+  background: var(--cookie-clay);
+}
+
+.cookie-login-page form button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.cookie-login-error {
+  color: #a22f26;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+}
+
+.cookie-login-register {
+  margin: 1.5rem 0 0;
+  color: #76685e;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.cookie-login-social {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cookie-login-social-unavailable {
+  margin: 1.5rem 0 0;
+  color: #76685e;
+  font-family: Arial, sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.cookie-login-social-button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #d9cbbb;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--cookie-ink);
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.cookie-login-social-button:hover:not(:disabled) {
+  border-color: var(--cookie-sage);
+  box-shadow: 0 0 0 3px rgba(104, 115, 90, 0.08);
+  transform: translateY(-1px);
+}
+
+.cookie-login-social-button.secondary {
+  background: #f8f0e7;
+}
+
+.cookie-login-social-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 760px) {
+  .cookie-login-page {
+    grid-template-columns: 1fr;
+    max-width: 560px;
+    min-height: auto;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+
+  .cookie-login-story {
+    min-height: 300px;
+    padding: 2rem;
+  }
+
+  .cookie-login-story h1 {
+    max-width: 320px;
+    font-size: 2.7rem;
+  }
+
+  .cookie-login-stamp {
+    right: 0;
+    bottom: 0;
+    width: 72px;
+    font-size: 0.65rem;
+  }
+
+  .cookie-login-panel {
+    padding: 2rem;
+  }
+
+  .cookie-login-wordmark {
+    margin-bottom: 1rem;
+  }
+
+  .cookie-login-overline {
+    margin-top: 1.5rem;
+  }
+}
