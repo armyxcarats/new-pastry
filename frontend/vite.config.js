@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const apiUrl = /^https?:\/\//i.test(configuredApi) ? new URL(configuredApi) : null
   const apiPath = (apiUrl?.pathname || configuredApi).replace(/\/+$/, '') || '/api/v1'
   const apiTarget = apiUrl?.origin || env.BACKEND_PROXY_TARGET || 'http://localhost:4001'
+  const secureApiTarget = new URL(apiTarget).protocol === 'https:'
 
   return {
     plugins: [react()],
@@ -25,7 +26,7 @@ export default defineConfig(({ mode }) => {
         [apiPath]: {
           target: apiTarget,
           changeOrigin: true,
-          secure: apiUrl?.protocol === 'https:',
+          secure: secureApiTarget,
           cookieDomainRewrite: '',
         },
       },
