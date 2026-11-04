@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
         [apiPath]: {
           target: apiTarget,
           changeOrigin: true,
-          secure: secureApiTarget,
+          secure: apiUrl?.protocol === 'https:',
           cookieDomainRewrite: '',
         },
       },
