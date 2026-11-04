@@ -19,6 +19,7 @@ const ListOrders = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [myOrdersList, setMyOrdersList] = useState([])
+    const [downloadingReceiptId, setDownloadingReceiptId] = useState('')
 
     const myOrders = async () => {
         try {
@@ -50,6 +51,28 @@ const ListOrders = () => {
             });
         }
     }, [error])
+
+    const downloadReceipt = async (orderId) => {
+        setDownloadingReceiptId(orderId)
+        try {
+            const { data } = await axios.get(`${import.meta.env.API}/order/${orderId}/receipt.pdf`, {
+                responseType: 'blob',
+                withCredentials: true
+            })
+            const pdfUrl = window.URL.createObjectURL(data)
+            const link = document.createElement('a')
+            link.href = pdfUrl
+            link.download = `receipt-${orderId}.pdf`
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.setTimeout(() => window.URL.revokeObjectURL(pdfUrl), 1000)
+        } catch {
+            toast.error('The receipt PDF could not be downloaded. Please try again.')
+        } finally {
+            setDownloadingReceiptId('')
+        }
+    }
 
     const columns = [
         {
@@ -85,18 +108,30 @@ const ListOrders = () => {
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 120,
+            width: 210,
             sortable: false,
             filterable: false,
             renderCell: (params) => (
-                <Button
-                    component={Link}
-                    to={`/order/${params.id}`}
-                    variant="contained"
-                    size="small"
-                >
-                    <i className="fa fa-eye" />
-                </Button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
+                    <Button
+                        component={Link}
+                        to={`/order/${params.id}`}
+                        variant="contained"
+                        size="small"
+                        aria-label={`View order ${params.id}`}
+                    >
+                        <i className="fa fa-eye" />
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => downloadReceipt(params.id)}
+                        disabled={downloadingReceiptId === params.id}
+                        aria-label={`Download PDF receipt for order ${params.id}`}
+                    >
+                        {downloadingReceiptId === params.id ? 'PDF…' : 'PDF'}
+                    </Button>
+                </div>
             )
         }
     ];

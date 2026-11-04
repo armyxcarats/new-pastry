@@ -1,14 +1,15 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), '')
   const configuredApi = env.API || 'http://localhost:4001/api/v1'
-  const isAbsoluteApi = /^https?:\/\//i.test(configuredApi)
-  const apiUrl = isAbsoluteApi ? new URL(configuredApi) : null
+  const apiUrl = /^https?:\/\//i.test(configuredApi) ? new URL(configuredApi) : null
   const apiPath = (apiUrl?.pathname || configuredApi).replace(/\/+$/, '') || '/api/v1'
   const apiTarget = apiUrl?.origin || env.BACKEND_PROXY_TARGET || 'http://localhost:4001'
+  const secureApiTarget = new URL(apiTarget).protocol === 'https:'
 
   return {
     plugins: [react()],
@@ -25,7 +26,8 @@ export default defineConfig(({ mode }) => {
         [apiPath]: {
           target: apiTarget,
           changeOrigin: true,
-          secure: true,
+          secure: apiUrl?.protocol === 'https:',
+          cookieDomainRewrite: '',
         },
       },
     },

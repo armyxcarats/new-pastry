@@ -4,6 +4,7 @@ const router = express.Router();
 const { newOrder,
 	myOrders,
 	getSingleOrder,
+	getOrderReceiptPdf,
 
 	deleteOrder,
 	allOrders,
@@ -19,6 +20,7 @@ const { isAuthenticatedUser, authorizeRoles } = require('../middleware/auth')
 
 router.post('/order/new', isAuthenticatedUser, newOrder);
 router.get('/orders/me', isAuthenticatedUser, myOrders);
+router.get('/order/:id/receipt.pdf', isAuthenticatedUser, getOrderReceiptPdf);
 router.get('/order/:id', isAuthenticatedUser, getSingleOrder);
 router.get('/admin/orders/', isAuthenticatedUser, authorizeRoles('admin'), allOrders);
 // // router.route('/admin/order/:id').delete(isAuthenticatedUser, deleteOrder);
