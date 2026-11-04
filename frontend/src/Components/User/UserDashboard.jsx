@@ -23,7 +23,7 @@ const UserDashboard = () => {
     useEffect(() => {
         let isCurrent = true
 
-        axios.get(`${import.meta.env.VITE_API}/orders/me`, { withCredentials: true })
+        axios.get(`${import.meta.env.API}/orders/me`, { withCredentials: true })
             .then(({ data }) => {
                 if (isCurrent) {
                     setOrders(Array.isArray(data.orders) ? data.orders : [])

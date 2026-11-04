@@ -13,7 +13,7 @@ const Profile = () => {
     useEffect(() => {
         let isCurrent = true
 
-        axios.get(`${import.meta.env.VITE_API}/me`)
+        axios.get(`${import.meta.env.API}/me`)
             .then(({ data }) => {
                 if (isCurrent) setUser(data.user)
             })

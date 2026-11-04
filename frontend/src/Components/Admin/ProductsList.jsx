@@ -23,7 +23,7 @@ const ProductsList = () => {
     useEffect(() => {
         let isCurrent = true
 
-        axios.get(`${import.meta.env.VITE_API}/admin/products`)
+        axios.get(`${import.meta.env.API}/admin/products`)
             .then(({ data }) => {
                 if (isCurrent) setProducts(data.products || [])
             })
@@ -189,7 +189,7 @@ const ProductsList = () => {
         if (!window.confirm(`Delete ${selectedProductIds.length} selected product(s)?`)) return
 
         try {
-            await axios.delete(`${import.meta.env.VITE_API}/admin/products`, {
+            await axios.delete(`${import.meta.env.API}/admin/products`, {
                 data: { ids: selectedProductIds },
                 withCredentials: true
             })
@@ -205,7 +205,7 @@ const ProductsList = () => {
         if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return
 
         try {
-            await axios.delete(`${import.meta.env.VITE_API}/admin/product/${product._id}`)
+            await axios.delete(`${import.meta.env.API}/admin/product/${product._id}`)
             setProducts((current) => current.filter((item) => item._id !== product._id))
             setSelectedProductIds((current) => current.filter((id) => id !== product._id))
             toast.success('Product deleted successfully.')

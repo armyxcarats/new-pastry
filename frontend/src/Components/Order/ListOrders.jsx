@@ -27,7 +27,7 @@ const ListOrders = () => {
                     'Authorization': `Bearer ${getToken()}`
                 }
             }
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/orders/me`, {
+            const { data } = await axios.get(`${import.meta.env.API}/orders/me`, {
                 ...config,
                 withCredentials: true
             })

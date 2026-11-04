@@ -36,7 +36,7 @@ const UpdateProfile = () => {
     useEffect(() => {
         let isCurrent = true
 
-        axios.get(`${import.meta.env.VITE_API}/me`)
+        axios.get(`${import.meta.env.API}/me`)
             .then(({ data }) => {
                 if (!isCurrent) return
                 const user = data.user
@@ -107,7 +107,7 @@ const UpdateProfile = () => {
         if (avatar) formData.set('avatar', avatar)
 
         try {
-            const { data } = await axios.put(`${import.meta.env.VITE_API}/me/update`, formData)
+            const { data } = await axios.put(`${import.meta.env.API}/me/update`, formData)
             dispatch({ type: LOGIN_SUCCESS, payload: data.user })
             toast.success('Profile updated successfully.')
             navigate('/me', { replace: true })

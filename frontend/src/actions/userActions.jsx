@@ -49,7 +49,7 @@ import {
 //                 'Content-Type': 'multipart/form-data'
 //             }
 //         }
-//         const { data } = await axios.post(`${import.meta.env.VITE_API}/register`, userData, config)
+//         const { data } = await axios.post(`${import.meta.env.API}/register`, userData, config)
 
 //         dispatch({
 //             type: REGISTER_USER_SUCCESS,
@@ -73,7 +73,7 @@ export const login = (email, password) => async (dispatch) => {
             withCredentials: true,
         }
 
-        const { data } = await axios.post(`${import.meta.env.VITE_API}/login`, { email, password }, config)
+        const { data } = await axios.post(`${import.meta.env.API}/login`, { email, password }, config)
         dispatch({
             type: LOGIN_SUCCESS,
             payload: data.user
@@ -97,7 +97,7 @@ export const socialLogin = (provider, idToken) => async (dispatch) => {
         }
 
         const { data } = await axios.post(
-            `${import.meta.env.VITE_API}/social-login`,
+            `${import.meta.env.API}/social-login`,
             { provider, idToken },
             config
         )
@@ -117,7 +117,7 @@ export const socialLogin = (provider, idToken) => async (dispatch) => {
 export const loadUser = () => async (dispatch) => {
     try {
         dispatch({ type: LOAD_USER_REQUEST })
-        const { data } = await axios.get(`${import.meta.env.VITE_API}/me`, {
+        const { data } = await axios.get(`${import.meta.env.API}/me`, {
             withCredentials: true
         })
         dispatch({
@@ -140,7 +140,7 @@ export const logout = () => async (dispatch) => {
             },
             withCredentials: true,
         }
-        await axios.get(`${import.meta.env.VITE_API}/logout`, config)
+        await axios.get(`${import.meta.env.API}/logout`, config)
         dispatch({
             type: LOGOUT_SUCCESS,
         })

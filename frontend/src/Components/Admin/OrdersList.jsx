@@ -13,7 +13,7 @@ const OrdersList = () => {
 
     useEffect(() => {
         let isCurrent = true
-        axios.get(`${import.meta.env.VITE_API}/admin/orders`, {
+        axios.get(`${import.meta.env.API}/admin/orders`, {
                 withCredentials: true
             })
             .then(({ data }) => {
@@ -47,7 +47,7 @@ const OrdersList = () => {
     const deleteOrder = async (orderId) => {
         if (!window.confirm('Delete this order record?')) return
         try {
-            await axios.delete(`${import.meta.env.VITE_API}/admin/order/${orderId}`, {
+            await axios.delete(`${import.meta.env.API}/admin/order/${orderId}`, {
                 withCredentials: true
             })
             setOrders((current) => current.filter((order) => order._id !== orderId))

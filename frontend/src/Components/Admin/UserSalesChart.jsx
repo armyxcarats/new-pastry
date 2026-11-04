@@ -28,7 +28,7 @@ const UserSalesChart = () => {
                 }
             }
 
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/customer-sales`, config)
+            const { data } = await axios.get(`${import.meta.env.API}/admin/customer-sales`, config)
             setSales(data.customerSales)
             setLoading(false)
         } catch (error) {

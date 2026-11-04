@@ -17,7 +17,7 @@ export default function MonthlySalesChart() {
                 }
             }
 
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/sales-per-month`, config)
+            const { data } = await axios.get(`${import.meta.env.API}/admin/sales-per-month`, config)
             setSales(data.salesPerMonth)
             // console.log(data.salesPerMonth)
             setLoading(false)

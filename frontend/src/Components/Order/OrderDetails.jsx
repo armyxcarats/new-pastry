@@ -26,7 +26,7 @@ const OrderDetails = () => {
                 }
             }
 
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/order/${id}`, {
+            const { data } = await axios.get(`${import.meta.env.API}/order/${id}`, {
                 ...config,
                 withCredentials: true
             })

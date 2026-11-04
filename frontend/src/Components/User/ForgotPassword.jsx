@@ -21,7 +21,7 @@ const ForgotPassword = () => {
         setLoading(true)
         try {
             const { data } = await axios.post(
-                `${import.meta.env.VITE_API}/password/forgot`,
+                `${import.meta.env.API}/password/forgot`,
                 formData,
                 { withCredentials: true }
             )

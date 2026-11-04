@@ -44,7 +44,7 @@ const NewProduct = () => {
     const [optionsError, setOptionsError] = useState('')
 
     useEffect(() => {
-        axios.get(`${import.meta.env.VITE_API}/admin/product-options`, { withCredentials: true })
+        axios.get(`${import.meta.env.API}/admin/product-options`, { withCredentials: true })
             .then(({ data }) => {
                 setCategories(data.categories || [])
                 setAddOnOptions(data.addOns || [])
@@ -96,7 +96,7 @@ const NewProduct = () => {
 
         setLoading(true)
         try {
-            await axios.post(`${import.meta.env.VITE_API}/admin/product/new`, {
+            await axios.post(`${import.meta.env.API}/admin/product/new`, {
                 name,
                 price: Number(price),
                 description,
