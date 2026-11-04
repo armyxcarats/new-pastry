@@ -36,7 +36,24 @@ const buildOrderReceiptPdf = async (order) => {
         doc.text(`Email: ${order.user?.email || 'N/A'}`);
         doc.text(`Status: ${order.orderStatus}`);
         doc.text(`Payment method: ${getPaymentMethodLabel(order.paymentMethod)}`);
+        doc.text(`Payment status: ${order.paymentStatus === 'paid' ? 'Paid' : 'Not paid'}`);
         doc.text(`Date: ${new Date(order.createdAt).toLocaleString()}`);
+        doc.text(`Fulfillment: ${order.orderType === 'pickup' ? 'Pickup' : 'Delivery'}`);
+        if (order.shippingInfo?.phoneNo) {
+            doc.text(`Phone: ${order.shippingInfo.phoneNo}`);
+        }
+        if (order.orderType === 'delivery') {
+            const address = [
+                order.shippingInfo?.address,
+                order.shippingInfo?.city,
+                order.shippingInfo?.postalCode,
+                order.shippingInfo?.country
+            ].filter(Boolean).join(', ');
+            if (address) doc.text(`Delivery address: ${address}`);
+        }
+        if (order.preferredDate) {
+            doc.text(`Preferred date and time: ${new Date(order.preferredDate).toLocaleString()}${order.preferredTime ? ` ${order.preferredTime}` : ''}`);
+        }
         doc.moveDown();
 
         doc.fontSize(14).text('Items');
@@ -51,11 +68,14 @@ const buildOrderReceiptPdf = async (order) => {
                     (addOn) => `${addOn.name} x${addOn.quantity} (${formatCurrency(addOn.price)} each)`
                 ).join(', ')}`);
             }
+            if (item.selectedOptions?.customMessage) {
+                doc.text(`   Message / instructions: ${item.selectedOptions.customMessage}`);
+            }
         });
 
         doc.moveDown();
         doc.fontSize(12).text(`Subtotal: ${formatCurrency(order.subtotal)}`);
-        doc.text(`Shipping: ${formatCurrency(order.shippingFee)}`);
+        doc.text(`Delivery: ${formatCurrency(order.shippingFee)}`);
         doc.text(`Tax: ${formatCurrency(order.taxPrice)}`);
         doc.fontSize(14).text(`Grand Total: ${formatCurrency(order.totalPrice)}`);
         doc.end();
@@ -325,6 +345,28 @@ exports.getSingleOrder = async (req, res, next) => {
         success: true,
         order
     })
+}
+
+exports.getOrderReceiptPdf = async (req, res, next) => {
+    try {
+        const order = await Order.findById(req.params.id).populate('user', 'name email');
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'No order found with this ID.' });
+        }
+        if ((!order.user || order.user._id.toString() !== req.user._id.toString()) && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'You are not allowed to download this receipt.' });
+        }
+
+        const pdf = await buildOrderReceiptPdf(order);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="receipt-${order._id}.pdf"`,
+            'Content-Length': pdf.length
+        });
+        return res.status(200).send(pdf);
+    } catch (error) {
+        return next(error);
+    }
 }
 
 exports.allOrders = async (req, res, next) => {
