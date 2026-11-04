@@ -18,11 +18,13 @@ export const getProducts = (currentPage = 1, keyword = '', price, category = '',
 
         const params = new URLSearchParams({
             page: String(currentPage),
-            keyword: keyword || '',
-            'price[lte]': String(price?.[1] ?? 1000),
-            'price[gte]': String(price?.[0] ?? 1)
+            keyword: keyword || ''
         })
 
+        if (keyword) {
+            params.set('price[lte]', String(price?.[1] ?? 1000))
+            params.set('price[gte]', String(price?.[0] ?? 1))
+        }
         if (category && category !== 'all' && category !== 'All bakes') {
             params.set('category', category)
         }

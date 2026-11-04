@@ -38,7 +38,6 @@ const NewProduct = () => {
     const [customizationOptions, setCustomizationOptions] = useState([])
     const [images, setImages] = useState([])
     const [imagesPreview, setImagesPreview] = useState([])
-    const [imageUrl, setImageUrl] = useState('')
     const [loading, setLoading] = useState(false)
     const [optionsLoading, setOptionsLoading] = useState(true)
     const [optionsError, setOptionsError] = useState('')
@@ -107,7 +106,7 @@ const NewProduct = () => {
                 stock: Number(stock),
                 addOns: selectedAddOns,
                 customizationOptions,
-                images: images.length ? images : imageUrl.trim() ? [imageUrl.trim()] : []
+                images
             }, { withCredentials: true })
             toast.success('Product created successfully.')
             navigate('/admin/products')
@@ -208,11 +207,7 @@ const NewProduct = () => {
                                 ) : <p className="text-muted">No active add-ons are available.</p>}
                             </fieldset>
                             <div className="form-group">
-                                <label htmlFor="product_image_url">Product image URL</label>
-                                <input id="product_image_url" className="form-control mb-2" type="url"
-                                    placeholder="Or paste an image URL (https://...)"
-                                    value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} />
-                                <label htmlFor="product_images">Or upload product images</label>
+                                <label htmlFor="product_images">Upload product images</label>
                                 <input id="product_images" className="form-control-file d-block" type="file"
                                     accept="image/*" multiple onChange={onChangeImages} />
                                 {imagesPreview.map((image, index) => (
@@ -220,7 +215,7 @@ const NewProduct = () => {
                                         className="mt-3 mr-2" width="72" height="68" style={{ objectFit: 'cover' }} />
                                 ))}
                                 <small className="form-text text-muted">
-                                    Uploaded images are saved by the shop server; an image URL can also be used.
+                                    Uploaded images are saved by the shop server.
                                 </small>
                             </div>
                             <button type="submit" className="btn btn-primary btn-block py-3"

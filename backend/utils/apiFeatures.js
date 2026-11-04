@@ -77,10 +77,8 @@ class APIFeatures {
             'price-asc': { price: 1, _id: 1 },
             'price-desc': { price: -1, _id: 1 }
         };
-        const sortOrder = sortOptions[this.queryStr.sortBy];
-        if (sortOrder) {
-            this.query = this.query.sort(sortOrder);
-        }
+        const sortOrder = sortOptions[this.queryStr.sortBy] || { createdAt: -1, _id: -1 };
+        this.query = this.query.sort(sortOrder);
         return this;
     }
 

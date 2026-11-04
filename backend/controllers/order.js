@@ -5,6 +5,20 @@ const sendEmail = require('../utils/sendEmail');
 const MINIMUM_LEAD_TIME_MS = 48 * 60 * 60 * 1000;
 const ORDER_STATUSES = ['Pending', 'Confirmed', 'Baking', 'Ready', 'Completed', 'Cancelled'];
 
+const restoreReservedStock = async (reservations) => {
+    while (reservations.length) {
+        const reservation = reservations[0];
+        const result = await Product.updateOne(
+            { _id: reservation.productId },
+            { $inc: { stock: reservation.quantity } }
+        );
+        if (result.matchedCount !== 1) {
+            throw new Error(`Could not restore stock for product ${reservation.productId}.`);
+        }
+        reservations.shift();
+    }
+};
+
 const escapeHtml = (value) => String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -138,6 +152,7 @@ const sendOrderStatusEmail = async (order) => {
 };
 
 exports.newOrder = async (req, res, next) => {
+    const reservedStock = [];
     try {
         const {
             orderItems,
@@ -299,6 +314,19 @@ exports.newOrder = async (req, res, next) => {
             country: String(shippingInfo.country || 'Philippines').trim()
         };
 
+        for (const [productId, quantity] of productQuantities) {
+            const product = productsById.get(productId);
+            const result = await Product.updateOne(
+                { _id: productId, stock: { $gte: quantity }, isAvailable: { $ne: false } },
+                { $inc: { stock: -quantity } }
+            );
+            if (result.modifiedCount !== 1) {
+                await restoreReservedStock(reservedStock);
+                return badRequest(`${product.name} does not have enough stock for that quantity.`);
+            }
+            reservedStock.push({ productId, quantity });
+        }
+
         const order = await Order.create({
             orderItems: normalizedItems,
             shippingInfo: normalizedShippingInfo,
@@ -318,6 +346,11 @@ exports.newOrder = async (req, res, next) => {
 
         return res.status(201).json({ success: true, order });
     } catch (error) {
+        try {
+            await restoreReservedStock(reservedStock);
+        } catch (rollbackError) {
+            return next(rollbackError);
+        }
         if (error.name === 'ValidationError' || error.name === 'CastError') {
             return res.status(400).json({ success: false, message: error.message });
         }
