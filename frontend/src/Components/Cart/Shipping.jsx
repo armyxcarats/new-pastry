@@ -25,9 +25,9 @@ const Shipping = ({ shipping = {}, saveShippingInfo }) => {
             || (shipping.preferredDate ? formatLocalDateTime(new Date(shipping.preferredDate)) : '')
     )
     const navigate = useNavigate()
-    const minimumDateTime = formatLocalDateTime(
+    const [minimumDateTime] = useState(() => formatLocalDateTime(
         new Date(Date.now() + MINIMUM_LEAD_TIME_HOURS * 60 * 60 * 1000)
-    )
+    ))
 
     const submitHandler = (event) => {
         event.preventDefault()
@@ -89,7 +89,7 @@ const Shipping = ({ shipping = {}, saveShippingInfo }) => {
                                 className="form-control"
                                 value={preferredDateTime}
                                 min={minimumDateTime}
-                                step="900"
+                                step="60"
                                 onChange={(event) => setPreferredDateTime(event.target.value)}
                                 required
                             />

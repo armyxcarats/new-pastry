@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import MetaData from '../Layout/MetaData'
 import Loader from '../Layout/Loader'
 import Sidebar from './SideBar'
+import { DataGrid } from '@mui/x-data-grid'
 
 const currency = new Intl.NumberFormat('en-PH', {
     style: 'currency',
@@ -49,29 +50,139 @@ const ProductsList = () => {
         const query = search.trim().toLowerCase()
         return products.filter((product) => {
             const matchesSearch = !query
-                || product.name.toLowerCase().includes(query)
-                || (product.addOns || []).some((addOn) => addOn.name.toLowerCase().includes(query))
+                || String(product.name || '').toLowerCase().includes(query)
+                || (product.addOns || []).some((addOn) => String(addOn.name || '').toLowerCase().includes(query))
             const matchesCategory = categoryFilter === 'all'
                 || product.category?.name === categoryFilter
             return matchesSearch && matchesCategory
         })
     }, [categoryFilter, products, search])
 
-    const toggleProductSelection = (productId) => {
-        setSelectedProductIds((current) => (
-            current.includes(productId)
-                ? current.filter((id) => id !== productId)
-                : [...current, productId]
-        ))
-    }
+    const rows = visibleProducts.map((product) => ({
+        id: product._id,
+        product,
+        name: product.name,
+        category: product.category?.name || 'Uncategorized',
+        subCategory: product.subCategory?.name || '',
+        price: Number(product.price || 0),
+        stock: product.stock,
+        addOns: product.addOns || []
+    }))
 
-    const toggleAllProducts = () => {
-        if (selectedProductIds.length === visibleProducts.length) {
-            setSelectedProductIds([])
-            return
+    const columns = [
+        {
+            field: 'name',
+            headerName: 'Product',
+            flex: 1.4,
+            minWidth: 250,
+            renderCell: ({ row }) => (
+                <div className="d-flex align-items-center" style={{ gap: 12, minWidth: 0 }}>
+                    {row.product.images?.[0]?.url ? (
+                        <img
+                            src={row.product.images[0].url}
+                            alt=""
+                            loading="lazy"
+                            style={{
+                                width: 56,
+                                height: 56,
+                                flex: '0 0 56px',
+                                objectFit: 'cover',
+                                borderRadius: 8,
+                                background: '#f2eadc'
+                            }}
+                        />
+                    ) : (
+                        <div
+                            className="d-flex align-items-center justify-content-center"
+                            aria-label="No product photo"
+                            style={{
+                                width: 56,
+                                height: 56,
+                                flex: '0 0 56px',
+                                borderRadius: 8,
+                                background: '#f2eadc',
+                                color: '#76685e'
+                            }}
+                        >
+                            No image
+                        </div>
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                        <strong>{row.name}</strong>
+                        <div className="small text-muted">#{row.id}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            field: 'category',
+            headerName: 'Category',
+            flex: 0.8,
+            minWidth: 140,
+            renderCell: ({ row }) => (
+                <div>
+                    {row.category}
+                    {row.subCategory && <div className="small text-muted">{row.subCategory}</div>}
+                </div>
+            )
+        },
+        {
+            field: 'price',
+            headerName: 'Price',
+            width: 125,
+            valueFormatter: (value) => currency.format(Number(value || 0))
+        },
+        { field: 'stock', headerName: 'Stock', width: 95 },
+        {
+            field: 'addOns',
+            headerName: 'Add-ons',
+            flex: 1,
+            minWidth: 230,
+            sortable: false,
+            filterable: false,
+            renderCell: ({ row }) => row.addOns.length ? (
+                <div
+                    className="d-flex flex-wrap align-content-center"
+                    style={{ gap: 6, padding: '8px 0', whiteSpace: 'normal' }}
+                >
+                    {row.addOns.map((addOn) => (
+                        <span
+                            key={addOn._id}
+                            className="badge badge-light border"
+                            style={{ maxWidth: '100%', whiteSpace: 'normal', textAlign: 'left' }}
+                            title={`${addOn.name}: ${currency.format(Number(addOn.price || 0))}`}
+                        >
+                            {addOn.name} · {currency.format(Number(addOn.price || 0))}
+                        </span>
+                    ))}
+                </div>
+            ) : <span className="text-muted">None</span>
+        },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 155,
+            sortable: false,
+            filterable: false,
+            renderCell: ({ row }) => (
+                <div className="d-flex align-items-center" style={{ gap: 8 }}>
+                    <Link
+                        to={`/admin/product/${row.id}`}
+                        className="btn btn-sm btn-outline-primary"
+                    >
+                        Edit
+                    </Link>
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => deleteProduct(row.product)}
+                    >
+                        Delete
+                    </button>
+                </div>
+            )
         }
-        setSelectedProductIds(visibleProducts.map((product) => product._id))
-    }
+    ]
 
     const deleteSelectedProducts = async () => {
         if (!selectedProductIds.length) return
@@ -161,122 +272,40 @@ const ProductsList = () => {
                     )}
 
                     {error && <div className="alert alert-danger" role="alert">{error}</div>}
-                    {loading ? <Loader /> : visibleProducts.length ? (
-                        <div className="table-responsive">
-                            <table className="table table-hover align-middle">
-                                <thead className="thead-light">
-                                    <tr>
-                                        <th scope="col" style={{ width: 44 }}>
-                                            <input
-                                                type="checkbox"
-                                                aria-label="Select all visible products"
-                                                checked={visibleProducts.length > 0 && selectedProductIds.length === visibleProducts.length}
-                                                onChange={toggleAllProducts}
-                                            />
-                                        </th>
-                                        <th scope="col">Product</th>
-                                        <th scope="col">Category</th>
-                                        <th scope="col">Price</th>
-                                        <th scope="col">Stock</th>
-                                        <th scope="col">Add-ons</th>
-                                        <th scope="col">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {visibleProducts.map((product) => (
-                                        <tr key={product._id}>
-                                            <td>
-                                                <input
-                                                    type="checkbox"
-                                                    aria-label={`Select ${product.name}`}
-                                                    checked={selectedProductIds.includes(product._id)}
-                                                    onChange={() => toggleProductSelection(product._id)}
-                                                />
-                                            </td>
-                                            <td style={{ minWidth: 230 }}>
-                                                <div className="d-flex align-items-center" style={{ gap: 12 }}>
-                                                    {product.images?.[0]?.url ? (
-                                                        <img
-                                                            src={product.images[0].url}
-                                                            alt=""
-                                                            loading="lazy"
-                                                            style={{
-                                                                width: 68,
-                                                                height: 68,
-                                                                objectFit: 'cover',
-                                                                borderRadius: 8,
-                                                                background: '#f2eadc'
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div
-                                                            className="d-flex align-items-center justify-content-center"
-                                                            aria-label="No product photo"
-                                                            style={{
-                                                                width: 68,
-                                                                height: 68,
-                                                                borderRadius: 8,
-                                                                background: '#f2eadc',
-                                                                color: '#76685e'
-                                                            }}
-                                                        >
-                                                            No image
-                                                        </div>
-                                                    )}
-                                                    <div>
-                                                        <strong>{product.name}</strong>
-                                                        <div className="small text-muted">#{product._id}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {product.category?.name || 'Uncategorized'}
-                                                {product.subCategory?.name && (
-                                                    <div className="small text-muted">{product.subCategory.name}</div>
-                                                )}
-                                            </td>
-                                            <td>{currency.format(Number(product.price || 0))}</td>
-                                            <td>{product.stock}</td>
-                                            <td style={{ minWidth: 190 }}>
-                                                {product.addOns?.length ? (
-                                                    <div className="d-flex flex-wrap" style={{ gap: 4 }}>
-                                                        {product.addOns.map((addOn) => (
-                                                            <span
-                                                                key={addOn._id}
-                                                                className="badge badge-light border"
-                                                                title={`${addOn.name}: ${currency.format(Number(addOn.price || 0))}`}
-                                                            >
-                                                                {addOn.name} · {currency.format(Number(addOn.price || 0))}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-muted">None</span>
-                                                )}
-                                            </td>
-                                            <td style={{ minWidth: 145 }}>
-                                                <Link
-                                                    to={`/admin/product/${product._id}`}
-                                                    className="btn btn-sm btn-outline-primary mr-2"
-                                                >
-                                                    Edit
-                                                </Link>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm btn-outline-danger"
-                                                    onClick={() => deleteProduct(product)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="alert alert-light border">
-                            No products match those filters.
+                    {loading ? <Loader /> : (
+                        <div style={{ width: '100%' }}>
+                            <DataGrid
+                                aria-label="Products"
+                                rows={rows}
+                                columns={columns}
+                                loading={loading}
+                                checkboxSelection
+                                checkboxSelectionVisibleOnly
+                                disableRowSelectionOnClick
+                                keepNonExistentRowsSelected
+                                rowSelectionModel={{
+                                    type: 'include',
+                                    ids: new Set(selectedProductIds)
+                                }}
+                                onRowSelectionModelChange={(selection) => {
+                                    setSelectedProductIds([...selection.ids].map(String))
+                                }}
+                                autoHeight
+                                getRowHeight={() => 'auto'}
+                                getEstimatedRowHeight={() => 100}
+                                pageSizeOptions={[5, 10, 25, 50]}
+                                initialState={{
+                                    pagination: { paginationModel: { pageSize: 10, page: 0 } }
+                                }}
+                                showToolbar
+                                slots={{
+                                    noRowsOverlay: () => (
+                                        <div className="d-flex h-100 align-items-center justify-content-center">
+                                            No products match those filters.
+                                        </div>
+                                    )
+                                }}
+                            />
                         </div>
                     )}
                 </main>

@@ -36,12 +36,16 @@ const ProcessOrder = () => {
     const updateOrder = async () => {
         setUpdating(true)
         try {
-            await axios.put(
+            const { data } = await axios.put(
                 `${import.meta.env.VITE_API}/admin/order/${id}`,
                 { status },
                 { withCredentials: true }
             )
-            toast.success('Order status updated.')
+            if (data.emailSent) {
+                toast.success('Order status updated and receipt emailed to the customer.')
+            } else {
+                toast.warning(data.emailWarning || 'Order status updated, but the customer email could not be sent.')
+            }
             navigate('/admin/orders')
         } catch (error) {
             toast.error(error.response?.data?.message || 'Unable to update this order.')

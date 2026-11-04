@@ -163,6 +163,30 @@
   font-size: 0.8rem;
 }
 
+.admin-dashboard-sales-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-dashboard-sales-filters label {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  color: #76685e;
+  font-family: Arial, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-dashboard-sales-filters select {
+  min-width: 0;
+  border-color: #e1d5c7;
+  background-color: #fffdfa;
+  color: #38291f;
+}
+
 .admin-dashboard-chart {
   width: 100%;
   height: 260px;

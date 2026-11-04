@@ -180,7 +180,7 @@ exports.getProducts = async (req, res) => {
             .populate({ path: 'category', select: 'name slug', model: Category })
             .populate({ path: 'subCategory', select: 'name slug', model: Category }),
         req.query
-    ).search().filter()
+    ).search().filter().sort()
     // .filter()
 
     apiFeatures.pagination(resPerPage);

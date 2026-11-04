@@ -51,8 +51,35 @@ const getDailyActivity = (records, dateField, monthValue, metric) => {
     return dailyCounts
 }
 
+const getDailySales = (orders, yearValue, monthValue) => {
+    const year = Number(yearValue)
+    const month = Number(monthValue)
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return []
+
+    const daysInMonth = new Date(year, month, 0).getDate()
+    const dailySales = Array.from({ length: daysInMonth }, (_, index) => ({
+        day: index + 1,
+        sales: 0
+    }))
+
+    orders.forEach((order) => {
+        const date = new Date(order.createdAt)
+        if (order.orderStatus === 'Cancelled'
+            || Number.isNaN(date.getTime())
+            || date.getFullYear() !== year
+            || date.getMonth() + 1 !== month) {
+            return
+        }
+        dailySales[date.getDate() - 1].sales += Number(order.totalPrice) || 0
+    })
+
+    return dailySales
+}
+
 const Dashboard = () => {
     const [selectedMonth, setSelectedMonth] = useState(currentMonthValue)
+    const [selectedSalesMonth, setSelectedSalesMonth] = useState(() => String(new Date().getMonth() + 1))
+    const [selectedSalesYear, setSelectedSalesYear] = useState(() => String(new Date().getFullYear()))
     const [summary, setSummary] = useState({
         products: 0,
         catalog: [],
@@ -123,10 +150,24 @@ const Dashboard = () => {
     }, new Map())
     const userActivity = getDailyActivity(summary.customerRecords, 'createdAt', selectedMonth, 'users')
     const orderActivity = getDailyActivity(summary.orderRecords, 'createdAt', selectedMonth, 'orders')
+    const salesActivity = getDailySales(summary.orderRecords, selectedSalesYear, selectedSalesMonth)
+    const selectedMonthSales = salesActivity.reduce((total, item) => total + item.sales, 0)
     const selectedMonthLabel = selectedMonth
         ? new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric' })
             .format(new Date(`${selectedMonth}-01T12:00:00`))
         : ''
+    const selectedSalesPeriodLabel = new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric' })
+        .format(new Date(Number(selectedSalesYear), Number(selectedSalesMonth) - 1, 1))
+    const currentYear = new Date().getFullYear()
+    const firstSalesYear = summary.orderRecords.reduce((earliestYear, order) => {
+        const orderYear = new Date(order.createdAt).getFullYear()
+        return Number.isNaN(orderYear) ? earliestYear : Math.min(earliestYear, orderYear)
+    }, currentYear)
+    const salesYearRangeStart = Math.min(firstSalesYear, currentYear - 1)
+    const salesYears = Array.from(
+        { length: currentYear + 1 - salesYearRangeStart + 1 },
+        (_, index) => String(currentYear + 1 - index)
+    )
 
     return (
         <>
@@ -174,7 +215,7 @@ const Dashboard = () => {
                         <div className="admin-dashboard-section-heading admin-dashboard-analytics-heading">
                             <div>
                                 <p className="admin-dashboard-eyebrow">MONTHLY ACTIVITY</p>
-                                <h2 id="admin-analytics-heading">Users &amp; orders</h2>
+                                <h2 id="admin-analytics-heading">Users, orders &amp; sales</h2>
                             </div>
                             <label className="admin-dashboard-month-picker">
                                 <span>Choose month</span>
@@ -232,6 +273,64 @@ const Dashboard = () => {
                                                     cursor={{ fill: '#f7efe4' }}
                                                 />
                                                 <Bar dataKey="orders" name="Orders" fill="#b65a3c" radius={[4, 4, 0, 0]} maxBarSize={24} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </article>
+
+                                <article className="admin-dashboard-chart-card">
+                                    <div className="admin-dashboard-chart-title">
+                                        <h3>Sales</h3>
+                                        <strong>{currency.format(selectedMonthSales)}</strong>
+                                    </div>
+                                    <div className="admin-dashboard-sales-filters">
+                                        <label>
+                                            <span>Month</span>
+                                            <select
+                                                className="form-control"
+                                                value={selectedSalesMonth}
+                                                onChange={(event) => setSelectedSalesMonth(event.target.value)}
+                                            >
+                                                {Array.from({ length: 12 }, (_, index) => {
+                                                    const month = index + 1
+                                                    const label = new Intl.DateTimeFormat('en-PH', { month: 'long' })
+                                                        .format(new Date(2026, index, 1))
+                                                    return <option key={month} value={month}>{label}</option>
+                                                })}
+                                            </select>
+                                        </label>
+                                        <label>
+                                            <span>Year</span>
+                                            <select
+                                                className="form-control"
+                                                value={selectedSalesYear}
+                                                onChange={(event) => setSelectedSalesYear(event.target.value)}
+                                            >
+                                                {salesYears.map((year) => (
+                                                    <option key={year} value={year}>{year}</option>
+                                                ))}
+                                            </select>
+                                        </label>
+                                    </div>
+                                    <p>Daily order sales in {selectedSalesPeriodLabel}, excluding cancelled orders</p>
+                                    <div className="admin-dashboard-chart">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={salesActivity} margin={{ top: 8, right: 12, left: 8, bottom: 4 }}>
+                                                <CartesianGrid stroke="#eee7de" strokeDasharray="3 3" vertical={false} />
+                                                <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fill: '#76685e', fontSize: 11 }} />
+                                                <YAxis
+                                                    width={88}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    tick={{ fill: '#76685e', fontSize: 11 }}
+                                                    tickFormatter={(value) => currency.format(value)}
+                                                />
+                                                <Tooltip
+                                                    labelFormatter={(day) => `${selectedSalesPeriodLabel} ${day}`}
+                                                    formatter={(value) => [currency.format(Number(value)), 'Sales']}
+                                                    cursor={{ fill: '#f7efe4' }}
+                                                />
+                                                <Bar dataKey="sales" name="Sales" fill="#68735a" radius={[4, 4, 0, 0]} maxBarSize={24} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>

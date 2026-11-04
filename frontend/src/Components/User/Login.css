@@ -86,12 +86,22 @@
 }
 
 .cookie-login-wordmark {
+  display: inline-flex;
   width: fit-content;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: auto;
   color: var(--cookie-ink);
   font-size: 1.55rem;
   font-weight: 700;
   text-decoration: none;
+}
+
+.cookie-login-wordmark img {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: contain;
 }
 
 .cookie-login-wordmark span {

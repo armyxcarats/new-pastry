@@ -5,6 +5,21 @@ const sendEmail = require('../utils/sendEmail');
 const MINIMUM_LEAD_TIME_MS = 48 * 60 * 60 * 1000;
 const ORDER_STATUSES = ['Pending', 'Confirmed', 'Baking', 'Ready', 'Completed', 'Cancelled'];
 
+const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const formatCurrency = (value) => `₱${Number(value || 0).toFixed(2)}`;
+
+const getPaymentMethodLabel = (method) => ({
+    card: 'Card',
+    gcash: 'GCash',
+    cod: 'Cash on delivery / pickup'
+}[method] || 'Not provided');
+
 const buildOrderReceiptPdf = async (order) => {
     const doc = new PDFDocument({ margin: 40, size: 'A4' });
     const chunks = [];
@@ -20,35 +35,50 @@ const buildOrderReceiptPdf = async (order) => {
         doc.text(`Customer: ${order.user?.name || 'Guest'}`);
         doc.text(`Email: ${order.user?.email || 'N/A'}`);
         doc.text(`Status: ${order.orderStatus}`);
+        doc.text(`Payment method: ${getPaymentMethodLabel(order.paymentMethod)}`);
         doc.text(`Date: ${new Date(order.createdAt).toLocaleString()}`);
         doc.moveDown();
 
         doc.fontSize(14).text('Items');
         order.orderItems.forEach((item, index) => {
-            doc.text(`${index + 1}. ${item.name} x${item.quantity} - ₱${Number(item.subtotal || 0).toFixed(2)}`);
+            doc.text(`${index + 1}. ${item.name} x${item.quantity} - ${formatCurrency(item.subtotal)}`);
+            const customizations = item.selectedOptions?.customizations || [];
+            if (customizations.length) {
+                doc.text(`   Options: ${customizations.map((option) => `${option.name}: ${option.label}`).join(', ')}`);
+            }
             if (item.addOns?.length) {
-                doc.text(`   Add-ons: ${item.addOns.map((addOn) => `${addOn.name} x${addOn.quantity}`).join(', ')}`);
+                doc.text(`   Add-ons: ${item.addOns.map(
+                    (addOn) => `${addOn.name} x${addOn.quantity} (${formatCurrency(addOn.price)} each)`
+                ).join(', ')}`);
             }
         });
 
         doc.moveDown();
-        doc.fontSize(12).text(`Subtotal: ₱${Number(order.subtotal || 0).toFixed(2)}`);
-        doc.text(`Shipping: ₱${Number(order.shippingFee || 0).toFixed(2)}`);
-        doc.text(`Tax: ₱${Number(order.taxPrice || 0).toFixed(2)}`);
-        doc.fontSize(14).text(`Grand Total: ₱${Number(order.totalPrice || 0).toFixed(2)}`);
+        doc.fontSize(12).text(`Subtotal: ${formatCurrency(order.subtotal)}`);
+        doc.text(`Shipping: ${formatCurrency(order.shippingFee)}`);
+        doc.text(`Tax: ${formatCurrency(order.taxPrice)}`);
+        doc.fontSize(14).text(`Grand Total: ${formatCurrency(order.totalPrice)}`);
         doc.end();
     });
 };
 
 const sendOrderStatusEmail = async (order) => {
-    if (!order?.user?.email) return;
+    if (!order?.user?.email) return false;
 
     const itemsHtml = order.orderItems.map((item) => `
         <tr>
-            <td>${item.name}</td>
-            <td>${item.quantity}</td>
-            <td>₱${Number(item.unitPrice || 0).toFixed(2)}</td>
-            <td>₱${Number(item.subtotal || 0).toFixed(2)}</td>
+            <td>
+                ${escapeHtml(item.name)}
+                ${item.selectedOptions?.customizations?.length ? `<ul>${item.selectedOptions.customizations.map(
+                    (option) => `<li>${escapeHtml(option.name)}: ${escapeHtml(option.label)}</li>`
+                ).join('')}</ul>` : ''}
+                ${item.addOns?.length ? `<ul>${item.addOns.map(
+                    (addOn) => `<li>${escapeHtml(addOn.name)} x${escapeHtml(addOn.quantity)} (${formatCurrency(addOn.price)} each)</li>`
+                ).join('')}</ul>` : ''}
+            </td>
+            <td>${escapeHtml(item.quantity)}</td>
+            <td>${formatCurrency(item.unitPrice)}</td>
+            <td>${formatCurrency(item.subtotal)}</td>
         </tr>
     `).join('');
 
@@ -58,8 +88,9 @@ const sendOrderStatusEmail = async (order) => {
         subject: `Order ${order._id} status updated to ${order.orderStatus}`,
         html: `
             <h2>Your order status has been updated</h2>
-            <p>Hello ${order.user.name || 'Customer'},</p>
-            <p>Your order is now marked as <strong>${order.orderStatus}</strong>.</p>
+            <p>Hello ${escapeHtml(order.user.name || 'Customer')},</p>
+            <p>Your order is now marked as <strong>${escapeHtml(order.orderStatus)}</strong>.</p>
+            <p><strong>Payment method:</strong> ${escapeHtml(getPaymentMethodLabel(order.paymentMethod))}</p>
             <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%;">
                 <thead>
                     <tr>
@@ -71,8 +102,10 @@ const sendOrderStatusEmail = async (order) => {
                 </thead>
                 <tbody>${itemsHtml}</tbody>
             </table>
-            <p><strong>Subtotal:</strong> ₱${Number(order.subtotal || 0).toFixed(2)}</p>
-            <p><strong>Grand Total:</strong> ₱${Number(order.totalPrice || 0).toFixed(2)}</p>
+            <p><strong>Subtotal:</strong> ${formatCurrency(order.subtotal)}</p>
+            <p><strong>Shipping:</strong> ${formatCurrency(order.shippingFee)}</p>
+            <p><strong>Tax:</strong> ${formatCurrency(order.taxPrice)}</p>
+            <p><strong>Grand Total:</strong> ${formatCurrency(order.totalPrice)}</p>
             <p>Thank you for shopping with us.</p>
         `,
         attachments: [{
@@ -81,6 +114,7 @@ const sendOrderStatusEmail = async (order) => {
             contentType: 'application/pdf'
         }]
     });
+    return true;
 };
 
 exports.newOrder = async (req, res, next) => {
@@ -341,12 +375,25 @@ exports.updateOrder = async (req, res, next) => {
         order.deliveredAt = new Date();
     }
     await order.save();
-    try {
-        await sendOrderStatusEmail(order);
-    } catch (emailError) {
-        console.error('Order status email failed:', emailError.message);
+    let emailSent = false;
+    let emailWarning;
+    if (!order.user?.email) {
+        emailWarning = 'The order was updated, but this customer account has no email address.';
+        console.error(`Order status email skipped for order ${order._id}: customer email is missing.`);
+    } else {
+        try {
+            emailSent = await sendOrderStatusEmail(order);
+        } catch (emailError) {
+            emailWarning = 'The order was updated, but the receipt email failed. Check the backend terminal for the SMTP error and restart the backend after changing its .env file.';
+            console.error('Order status email failed:', emailError.message);
+        }
     }
-    return res.status(200).json({ success: true, order });
+    return res.status(200).json({
+        success: true,
+        order,
+        emailSent,
+        ...(!emailSent && { emailWarning })
+    });
 }
 
 exports.totalOrders = async (req, res, next) => {

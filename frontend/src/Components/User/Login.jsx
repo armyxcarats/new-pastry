@@ -136,7 +136,10 @@ const Login = () => {
                         </section>
 
                         <section className="cookie-login-panel" aria-labelledby="login_heading">
-                            <Link to="/" className="cookie-login-wordmark">Crumb <span>&</span> Co.</Link>
+                            <Link to="/" className="cookie-login-wordmark">
+                                <img src="/images/crumb-co-logo.png" alt="" />
+                                <span>Crumb &amp; Co.</span>
+                            </Link>
                             <p className="cookie-login-overline">GOOD TO HAVE YOU BACK</p>
                             <h2 id="login_heading">Sign in</h2>
                             <p className="cookie-login-intro">Pick up where your next favorite treat begins.</p>

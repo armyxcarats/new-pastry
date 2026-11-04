@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import Product from './Product/Product'
 // import products from '../products.json'
@@ -8,8 +8,6 @@ import Slider from '@mui/material/Slider';
 import MetaData from './Layout/MetaData'
 import Loader from './Layout/Loader';
 import Pagination from '@mui/material/Pagination';
-import axios from 'axios'
-
 import { useDispatch, useSelector } from 'react-redux'
 import { getProducts } from '../actions/productActions'
 
@@ -25,6 +23,7 @@ const Home = () => {
     const [activeCategory, setActiveCategory] = useState('All bakes')
     const [ratingFilter, setRatingFilter] = useState('all')
     const [reviewFilter, setReviewFilter] = useState('all')
+    const [sortBy, setSortBy] = useState('')
     let { keyword } = useParams();
     const dispatch = useDispatch();
     const { loading, products, error, productsCount, resPerPage, filteredProductsCount } = useSelector(state => state.products);
@@ -85,8 +84,8 @@ const Home = () => {
     //     // getProducts(keyword, price, currentPage)
     // }, [keyword, price, currentPage]);
     useEffect(() => {
-        dispatch(getProducts(currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter))
-    }, [currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter, dispatch]);
+        dispatch(getProducts(currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter, sortBy))
+    }, [currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter, sortBy, dispatch]);
 
     return (
         <>
@@ -139,6 +138,24 @@ const Home = () => {
                             </button>
                         ))}
                     </nav>
+                    <div className="row justify-content-end mb-3">
+                        <div className="col-12 col-sm-6 col-md-4">
+                            <label htmlFor="price-sort" className="d-block mb-2 fw-bold">Sort by price</label>
+                            <select
+                                id="price-sort"
+                                className="form-control"
+                                value={sortBy}
+                                onChange={(event) => {
+                                    setSortBy(event.target.value)
+                                    setCurrentPage(1)
+                                }}
+                            >
+                                <option value="">Default order</option>
+                                <option value="price-asc">Lowest to highest</option>
+                                <option value="price-desc">Highest to lowest</option>
+                            </select>
+                        </div>
+                    </div>
                     {error && <p className="alert alert-danger" role="alert">{error}</p>}
                     <div className="row">
                         {keyword ? (

@@ -1305,12 +1305,26 @@ ul.CTAs a {
 }
 
 .bakery-header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
   color: #fff7ea;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.7rem;
+  font-size: 1.45rem;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.bakery-header-brand img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.bakery-header-brand-name {
+  color: #fff7ea;
 }
 
 .bakery-header-brand:hover {
@@ -1318,6 +1332,6 @@ ul.CTAs a {
   text-decoration: none;
 }
 
-.bakery-header-brand span {
-  color: #e2a16f;
+.bakery-header-brand:hover .bakery-header-brand-name {
+  color: #f1d2a7;
 }

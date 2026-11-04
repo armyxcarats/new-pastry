@@ -33,7 +33,10 @@ export const Header = ({ cartItems }) => {
             <nav className="navbar row">
                 <div className="col-12 col-md-3">
                     <div className="navbar-brand">
-                        <Link to="/" className="bakery-header-brand">Crumb <span>&</span> Co.</Link>
+                        <Link to="/" className="bakery-header-brand">
+                            <img src="/images/crumb-co-logo.png" alt="" />
+                            <span className="bakery-header-brand-name">Crumb &amp; Co.</span>
+                        </Link>
 
                     </div>
 
