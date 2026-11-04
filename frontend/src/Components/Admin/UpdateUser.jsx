@@ -30,7 +30,7 @@ const UpdateUser = () => {
     useEffect(() => {
         let isCurrent = true
 
-        axios.get(`${import.meta.env.VITE_API}/admin/user/${id}`)
+        axios.get(`${import.meta.env.API}/admin/user/${id}`)
             .then(({ data }) => {
                 if (!isCurrent) return
                 setUser(data.user)
@@ -73,7 +73,7 @@ const UpdateUser = () => {
         setError('')
 
         try {
-            await axios.put(`${import.meta.env.VITE_API}/admin/user/${id}`, form)
+            await axios.put(`${import.meta.env.API}/admin/user/${id}`, form)
             toast.success('User account updated successfully.')
             navigate('/admin/users', { replace: true })
         } catch (requestError) {

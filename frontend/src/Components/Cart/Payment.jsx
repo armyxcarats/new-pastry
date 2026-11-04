@@ -48,7 +48,7 @@ const Payment = ({ cartItems, shippingInfo, clearCart }) => {
 
         try {
             await axios.post(
-                `${import.meta.env.VITE_API}/order/new`,
+                `${import.meta.env.API}/order/new`,
                 order,
                 { withCredentials: true }
             )

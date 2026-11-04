@@ -11,7 +11,11 @@ const cart = require('./routes/cart');
 
 const allowedOrigins = [
     /^http:\/\/localhost:\d+$/,
-    /^http:\/\/127\.0\.0\.1:\d+$/
+    /^http:\/\/127\.0\.0\.1:\d+$/,
+    ...(process.env.FRONTEND_URL || '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
 ];
 
 app.use(cors({

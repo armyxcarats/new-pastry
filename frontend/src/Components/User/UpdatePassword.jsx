@@ -29,7 +29,7 @@ const UpdatePassword = () => {
                 }
             }
 
-            const { data } = await axios.put(`${import.meta.env.VITE_API}/password/update`, formData, config)
+            const { data } = await axios.put(`${import.meta.env.API}/password/update`, formData, config)
             setIsUpdated(data.success)
             setLoading(false)
             toast.success('password updated', {

@@ -53,7 +53,7 @@ export default function ProductSalesChart() {
                 }
             }
 
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/admin/product-sales`, config)
+            const { data } = await axios.get(`${import.meta.env.API}/admin/product-sales`, config)
             setSales(data.totalPercentage)
 
         } catch (error) {

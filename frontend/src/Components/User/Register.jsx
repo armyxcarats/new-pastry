@@ -63,7 +63,7 @@ const Register = () => {
         formData.set('avatar', avatar)
 
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API}/register`, formData)
+            const { data } = await axios.post(`${import.meta.env.API}/register`, formData)
             toast.success('Registration complete! Sign in with your new credentials.')
             if (data.avatarUploadWarning) {
                 toast.warning('Your account was created, but the avatar could not be uploaded.')

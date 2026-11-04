@@ -133,8 +133,8 @@ const ProductDetails = ({ addItemToCart }) => {
         setReviewSubmitting(true)
         try {
             const request = editingReviewId
-                ? axios.put(`${import.meta.env.VITE_API}/review/${editingReviewId}`, reviewData, { withCredentials: true })
-                : axios.post(`${import.meta.env.VITE_API}/review`, reviewData, { withCredentials: true })
+                ? axios.put(`${import.meta.env.API}/review/${editingReviewId}`, reviewData, { withCredentials: true })
+                : axios.post(`${import.meta.env.API}/review`, reviewData, { withCredentials: true })
             const { data } = await request
             if (data.success) {
                 toast.success(editingReviewId ? 'Review updated successfully.' : 'Review added successfully.')
@@ -161,7 +161,7 @@ const ProductDetails = ({ addItemToCart }) => {
         if (!window.confirm('Delete this review? This cannot be undone.')) return
 
         try {
-            await axios.delete(`${import.meta.env.VITE_API}/review/${reviewId}`, {
+            await axios.delete(`${import.meta.env.API}/review/${reviewId}`, {
                 withCredentials: true
             })
             toast.success('Review deleted.')
@@ -202,7 +202,7 @@ const ProductDetails = ({ addItemToCart }) => {
         if (!isAuthenticated || !currentUser?._id) return undefined
 
         let isCurrent = true
-        axios.get(`${import.meta.env.VITE_API}/product/${id}/review-eligibility`, {
+        axios.get(`${import.meta.env.API}/product/${id}/review-eligibility`, {
             withCredentials: true
         }).then(({ data }) => {
             if (isCurrent) {

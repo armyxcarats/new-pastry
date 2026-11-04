@@ -19,7 +19,7 @@ const ProcessOrder = () => {
     useEffect(() => {
         const loadOrder = async () => {
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API}/order/${id}`, {
+                const { data } = await axios.get(`${import.meta.env.API}/order/${id}`, {
                     withCredentials: true
                 })
                 setOrder(data.order)
@@ -37,7 +37,7 @@ const ProcessOrder = () => {
         setUpdating(true)
         try {
             const { data } = await axios.put(
-                `${import.meta.env.VITE_API}/admin/order/${id}`,
+                `${import.meta.env.API}/admin/order/${id}`,
                 { status },
                 { withCredentials: true }
             )

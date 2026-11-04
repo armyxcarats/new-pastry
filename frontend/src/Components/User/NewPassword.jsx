@@ -18,7 +18,7 @@ const NewPassword = () => {
         setLoading(true)
         try {
             const { data } = await axios.put(
-                `${import.meta.env.VITE_API}/password/reset/${encodeURIComponent(token)}`,
+                `${import.meta.env.API}/password/reset/${encodeURIComponent(token)}`,
                 passwords,
                 { withCredentials: true }
             )

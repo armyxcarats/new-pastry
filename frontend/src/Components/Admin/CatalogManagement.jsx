@@ -5,7 +5,7 @@ import MetaData from '../Layout/MetaData'
 import Loader from '../Layout/Loader'
 import Sidebar from './SideBar'
 
-const API = import.meta.env.VITE_API
+const API = import.meta.env.API
 const ADDON_CATEGORIES = ['cake', 'pastry', 'cookies', 'drinks', 'party']
 
 const CatalogManagement = () => {

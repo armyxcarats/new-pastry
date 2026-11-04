@@ -17,7 +17,7 @@ const ProductReviews = () => {
         }
         setLoading(true)
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API}/reviews?id=${encodeURIComponent(id)}`, {
+            const { data } = await axios.get(`${import.meta.env.API}/reviews?id=${encodeURIComponent(id)}`, {
                 withCredentials: true
             })
             setReviews(data.reviews || [])
@@ -32,7 +32,7 @@ const ProductReviews = () => {
     const deleteReview = async (reviewId) => {
         try {
             await axios.delete(
-                `${import.meta.env.VITE_API}/reviews?id=${encodeURIComponent(reviewId)}&productId=${encodeURIComponent(productId)}`,
+                `${import.meta.env.API}/reviews?id=${encodeURIComponent(reviewId)}&productId=${encodeURIComponent(productId)}`,
                 { withCredentials: true }
             )
             setReviews((current) => current.filter((review) => review._id !== reviewId))

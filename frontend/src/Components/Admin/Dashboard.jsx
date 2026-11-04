@@ -99,9 +99,9 @@ const Dashboard = () => {
         const loadDashboard = async () => {
             try {
                 const [productsResponse, ordersResponse, usersResponse] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API}/admin/products`, { withCredentials: true }),
-                    axios.get(`${import.meta.env.VITE_API}/admin/orders`, { withCredentials: true }),
-                    axios.get(`${import.meta.env.VITE_API}/admin/users`, { withCredentials: true })
+                    axios.get(`${import.meta.env.API}/admin/products`, { withCredentials: true }),
+                    axios.get(`${import.meta.env.API}/admin/orders`, { withCredentials: true }),
+                    axios.get(`${import.meta.env.API}/admin/users`, { withCredentials: true })
                 ])
 
                 if (!isCurrent) return

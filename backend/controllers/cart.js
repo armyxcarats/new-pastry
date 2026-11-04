@@ -96,8 +96,8 @@ exports.saveCart = async (req, res, next) => {
                 });
             }
 
-            for (const [productId, quantity] of quantitiesByProduct) {
-                if (quantity > productsById.get(productId).stock) {
+            for (const [productId, requestedQuantity] of quantitiesByProduct) {
+                if (requestedQuantity > productsById.get(productId).stock) {
                     return res.status(400).json({
                         success: false,
                         message: `${productsById.get(productId).name} does not have enough stock for those cart quantities.`

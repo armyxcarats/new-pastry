@@ -80,7 +80,7 @@ function App() {
   useEffect(() => {
     let isCurrent = true
     if (!authLoading && isAuthenticated && userId) {
-      axios.get(`${import.meta.env.VITE_API}/cart`, { withCredentials: true })
+      axios.get(`${import.meta.env.API}/cart`, { withCredentials: true })
         .then(({ data }) => {
           if (!isCurrent) return
           setState((current) => ({ ...current, cartItems: data.items || [] }))
@@ -110,7 +110,7 @@ function App() {
       const currentIdentity = cartIdentityRef.current
       if (!currentIdentity.isAuthenticated || currentIdentity.userId !== userId
         || currentIdentity.cartOwnerId !== userId) return
-      axios.put(`${import.meta.env.VITE_API}/cart`, { items: state.cartItems }, {
+      axios.put(`${import.meta.env.API}/cart`, { items: state.cartItems }, {
         withCredentials: true
       }).catch((error) => {
         console.error('Cart synchronization failed:', error.response?.data?.message || error.message)
@@ -133,7 +133,7 @@ function App() {
     }
     const ownerIdAtRequest = userId
     try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API}/product/${id}`)
+      const { data } = await axios.get(`${import.meta.env.API}/product/${id}`)
       const currentIdentity = cartIdentityRef.current
       if (!currentIdentity.isAuthenticated || currentIdentity.userId !== ownerIdAtRequest
         || currentIdentity.cartOwnerId !== ownerIdAtRequest) return false

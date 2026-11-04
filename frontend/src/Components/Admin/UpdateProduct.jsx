@@ -48,8 +48,8 @@ const UpdateProduct = () => {
     useEffect(() => {
         let isCurrent = true
         Promise.all([
-            axios.get(`${import.meta.env.VITE_API}/product/${id}`),
-            axios.get(`${import.meta.env.VITE_API}/admin/product-options`, { withCredentials: true })
+            axios.get(`${import.meta.env.API}/product/${id}`),
+            axios.get(`${import.meta.env.API}/admin/product-options`, { withCredentials: true })
         ]).then(([productResponse, optionsResponse]) => {
             if (!isCurrent) return
             const current = productResponse.data.product
@@ -151,7 +151,7 @@ const UpdateProduct = () => {
         else if (imageUrl.trim()) productData.images = [imageUrl.trim()]
 
         try {
-            await axios.put(`${import.meta.env.VITE_API}/admin/product/${id}`, productData, {
+            await axios.put(`${import.meta.env.API}/admin/product/${id}`, productData, {
                 withCredentials: true
             })
             toast.success('Product updated successfully.')

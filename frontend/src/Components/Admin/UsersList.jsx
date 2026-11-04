@@ -17,7 +17,7 @@ const UsersList = () => {
     useEffect(() => {
         let isCurrent = true
 
-        axios.get(`${import.meta.env.VITE_API}/admin/users`)
+        axios.get(`${import.meta.env.API}/admin/users`)
             .then(({ data }) => {
                 if (isCurrent) setUsers(data.users || [])
             })
@@ -39,7 +39,7 @@ const UsersList = () => {
         setUpdatingId(target._id)
         try {
             const { data } = await axios.put(
-                `${import.meta.env.VITE_API}/admin/user/${target._id}`,
+                `${import.meta.env.API}/admin/user/${target._id}`,
                 changes
             )
             setUsers((current) => current.map((item) => (
@@ -61,7 +61,7 @@ const UsersList = () => {
 
         setUpdatingId(target._id)
         try {
-            await axios.delete(`${import.meta.env.VITE_API}/admin/user/${target._id}`)
+            await axios.delete(`${import.meta.env.API}/admin/user/${target._id}`)
             setUsers((current) => current.filter((item) => item._id !== target._id))
             toast.success('User account deleted.')
         } catch (requestError) {
