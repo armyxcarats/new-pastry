@@ -12,11 +12,23 @@ const Cart = ({ addItemToCart, removeItemFromCart, updateCartItemMessage, cartIt
     )
     const getItemUnitPrice = (item) => Number(item.price || 0) + getAddOnsTotal(item)
 
+    const getMaxItemQuantity = (item) => {
+        const quantityInOtherLines = cartItems.reduce((total, otherItem) => (
+            otherItem.product === item.product
+                && (otherItem.cartKey || otherItem.product) !== (item.cartKey || item.product)
+                ? total + Number(otherItem.quantity || 0)
+                : total
+        ), 0)
+        return Math.max(0, Number(item.stock || 0) - quantityInOtherLines)
+    }
+    const hasInventoryIssue = cartItems.some((item) => (
+        Number(item.quantity) > getMaxItemQuantity(item)
+    ))
+
 
     const increaseQty = (item) => {
-        const { product: id, quantity, stock } = item
+        const { product: id, quantity } = item
         const newQty = quantity + 1;
-        if (newQty > stock) return;
         addItemToCart(id, newQty, item.addOns, item.customizations, item.customMessage)
     }
 
@@ -40,6 +52,11 @@ const Cart = ({ addItemToCart, removeItemFromCart, updateCartItemMessage, cartIt
                 : cartItems.length === 0 ? <h2 className="mt-5">Your Cart is Empty</h2> : (
                 <>
                     <h2 className="mt-5">Your Cart: <b>{cartItems.length} items</b></h2>
+                    {hasInventoryIssue && (
+                        <div className="alert alert-warning" role="alert">
+                            Some cart quantities exceed the current stock. Reduce or remove those items before checkout.
+                        </div>
+                    )}
 
                     <div className="row d-flex justify-content-between">
                         <div className="col-12 col-lg-8">
@@ -102,7 +119,13 @@ const Cart = ({ addItemToCart, removeItemFromCart, updateCartItemMessage, cartIt
 
                                                     <input type="number" className="form-control count d-inline" value={item.quantity} readOnly />
 
-                                                    <span className="btn btn-primary plus" onClick={() => increaseQty(item)}>+</span>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary plus"
+                                                        onClick={() => increaseQty(item)}
+                                                        disabled={Number(item.stock) <= 0}
+                                                        aria-label={`Increase ${item.name} quantity`}
+                                                    >+</button>
                                                 </div>
                                             </div>
 
@@ -128,7 +151,7 @@ const Cart = ({ addItemToCart, removeItemFromCart, updateCartItemMessage, cartIt
 
 
                                 <hr />
-                                <button id="checkout_btn" className="btn btn-primary btn-block" onClick={checkoutHandler}>Check out</button>
+                                <button id="checkout_btn" className="btn btn-primary btn-block" onClick={checkoutHandler} disabled={hasInventoryIssue}>Check out</button>
                                 {/*<button id="checkout_btn" className="btn btn-primary btn-block" >Check out</button>*/}
                             </div>
                         </div>

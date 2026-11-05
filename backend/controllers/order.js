@@ -2,6 +2,8 @@ const Order = require('../models/order');
 const Product = require('../models/product');
 const PDFDocument = require('pdfkit');
 const sendEmail = require('../utils/sendEmail');
+const RECEIPT_FONT = require.resolve('@fontsource/noto-sans/files/noto-sans-latin-400-normal.woff');
+const RECEIPT_CURRENCY_FONT = require.resolve('@fontsource/noto-sans/files/noto-sans-latin-ext-400-normal.woff');
 const MINIMUM_LEAD_TIME_MS = 48 * 60 * 60 * 1000;
 const ORDER_STATUSES = ['Pending', 'Confirmed', 'Baking', 'Ready', 'Completed', 'Cancelled'];
 
@@ -19,6 +21,35 @@ const restoreReservedStock = async (reservations) => {
     }
 };
 
+const adjustOrderStock = async (order, direction) => {
+    const quantities = new Map();
+    for (const item of order.orderItems) {
+        const productId = String(item.product);
+        quantities.set(productId, (quantities.get(productId) || 0) + Number(item.quantity));
+    }
+
+    const changes = [];
+    for (const [productId, quantity] of quantities) {
+        const result = await Product.updateOne(
+            direction < 0
+                ? { _id: productId, stock: { $gte: quantity } }
+                : { _id: productId },
+            { $inc: { stock: direction * quantity } }
+        );
+        if (result.modifiedCount !== 1) {
+            for (const change of changes.reverse()) {
+                await Product.updateOne(
+                    { _id: change.productId },
+                    { $inc: { stock: -direction * change.quantity } }
+                );
+            }
+            return false;
+        }
+        changes.push({ productId, quantity });
+    }
+    return true;
+};
+
 const escapeHtml = (value) => String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -27,6 +58,10 @@ const escapeHtml = (value) => String(value ?? '')
     .replace(/'/g, '&#39;');
 
 const formatCurrency = (value) => `₱${Number(value || 0).toFixed(2)}`;
+const writePdfCurrency = (doc, value) => {
+    doc.font(RECEIPT_CURRENCY_FONT).text('₱', { continued: true });
+    doc.font(RECEIPT_FONT).text(Number(value || 0).toFixed(2));
+};
 
 const getPaymentMethodLabel = (method) => ({
     card: 'Card',
@@ -43,7 +78,7 @@ const buildOrderReceiptPdf = async (order) => {
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
-        doc.fontSize(20).text('Pastry Shop Receipt', { align: 'center' });
+        doc.font(RECEIPT_FONT).fontSize(20).text('Pastry Shop Receipt', { align: 'center' });
         doc.moveDown();
         doc.fontSize(12).text(`Order ID: ${order._id}`);
         doc.text(`Customer: ${order.user?.name || 'Guest'}`);
@@ -72,14 +107,15 @@ const buildOrderReceiptPdf = async (order) => {
 
         doc.fontSize(14).text('Items');
         order.orderItems.forEach((item, index) => {
-            doc.text(`${index + 1}. ${item.name} x${item.quantity} - ${formatCurrency(item.subtotal)}`);
+            doc.text(`${index + 1}. ${item.name} x${item.quantity} - `, { continued: true });
+            writePdfCurrency(doc, item.subtotal);
             const customizations = item.selectedOptions?.customizations || [];
             if (customizations.length) {
                 doc.text(`   Options: ${customizations.map((option) => `${option.name}: ${option.label}`).join(', ')}`);
             }
             if (item.addOns?.length) {
                 doc.text(`   Add-ons: ${item.addOns.map(
-                    (addOn) => `${addOn.name} x${addOn.quantity} (${formatCurrency(addOn.price)} each)`
+                    (addOn) => `${addOn.name} x${addOn.quantity}`
                 ).join(', ')}`);
             }
             if (item.selectedOptions?.customMessage) {
@@ -88,10 +124,12 @@ const buildOrderReceiptPdf = async (order) => {
         });
 
         doc.moveDown();
-        doc.fontSize(12).text(`Subtotal: ${formatCurrency(order.subtotal)}`);
-        doc.text(`Delivery: ${formatCurrency(order.shippingFee)}`);
-        doc.text(`Tax: ${formatCurrency(order.taxPrice)}`);
-        doc.fontSize(14).text(`Grand Total: ${formatCurrency(order.totalPrice)}`);
+        doc.fontSize(12).text('Subtotal: ', { continued: true });
+        writePdfCurrency(doc, order.subtotal);
+        doc.text('Delivery: ', { continued: true });
+        writePdfCurrency(doc, order.shippingFee);
+        doc.fontSize(14).text('Grand Total: ', { continued: true });
+        writePdfCurrency(doc, Number(order.subtotal || 0) + Number(order.shippingFee || 0));
         doc.end();
     });
 };
@@ -138,8 +176,7 @@ const sendOrderStatusEmail = async (order) => {
             </table>
             <p><strong>Subtotal:</strong> ${formatCurrency(order.subtotal)}</p>
             <p><strong>Shipping:</strong> ${formatCurrency(order.shippingFee)}</p>
-            <p><strong>Tax:</strong> ${formatCurrency(order.taxPrice)}</p>
-            <p><strong>Grand Total:</strong> ${formatCurrency(order.totalPrice)}</p>
+            <p><strong>Grand Total:</strong> ${formatCurrency(Number(order.subtotal || 0) + Number(order.shippingFee || 0))}</p>
             <p>Thank you for shopping with us.</p>
         `,
         attachments: [{
@@ -303,8 +340,8 @@ exports.newOrder = async (req, res, next) => {
 
         subtotal = Math.round(subtotal * 100) / 100;
         const shippingFee = orderType === 'delivery' && subtotal <= 200 ? 25 : 0;
-        const taxPrice = Math.round(subtotal * 0.05 * 100) / 100;
-        const totalPrice = Math.round((subtotal + shippingFee + taxPrice) * 100) / 100;
+        const taxPrice = 0;
+        const totalPrice = Math.round((subtotal + shippingFee) * 100) / 100;
         const normalizedShippingInfo = {
             fullName: req.user.name,
             address: String(shippingInfo.address || '').trim(),
@@ -341,6 +378,7 @@ exports.newOrder = async (req, res, next) => {
             paymentInfo: { status: 'pending' },
             paymentStatus: 'pending',
             orderStatus: 'Pending',
+            stockDeducted: true,
             user: req.user._id
         });
 
@@ -442,14 +480,65 @@ exports.updateOrder = async (req, res, next) => {
     if (!ORDER_STATUSES.includes(req.body.status)) {
         return res.status(400).json({ success: false, message: 'Choose a valid order status.' });
     }
-    if (['Completed', 'Cancelled'].includes(order.orderStatus)) {
+    const isCompletedStockSync = order.orderStatus === 'Completed'
+        && req.body.status === 'Completed'
+        && !order.stockDeducted;
+    if (['Completed', 'Cancelled'].includes(order.orderStatus) && !isCompletedStockSync) {
         return res.status(400).json({ success: false, message: `A ${order.orderStatus.toLowerCase()} order cannot be changed.` });
+    }
+    if (isCompletedStockSync) {
+        const stockUpdated = await adjustOrderStock(order, -1);
+        if (!stockUpdated) {
+            return res.status(400).json({
+                success: false,
+                message: 'There is not enough current stock to sync this completed order. Update product stock first.'
+            });
+        }
+        order.stockDeducted = true;
+        await order.save();
+        return res.status(200).json({
+            success: true,
+            order,
+            inventoryUpdated: true
+        });
+    }
+
+    const previousStatus = order.orderStatus;
+    const previousStockDeducted = order.stockDeducted;
+    let inventoryUpdated = false;
+    if (req.body.status === 'Completed' && !order.stockDeducted) {
+        inventoryUpdated = await adjustOrderStock(order, -1);
+        if (!inventoryUpdated) {
+            return res.status(400).json({
+                success: false,
+                message: 'There is not enough current stock to complete this order. Update product stock first.'
+            });
+        }
+        order.stockDeducted = true;
+    } else if (req.body.status === 'Cancelled' && order.stockDeducted) {
+        inventoryUpdated = await adjustOrderStock(order, 1);
+        if (!inventoryUpdated) {
+            return res.status(500).json({
+                success: false,
+                message: 'The order was not cancelled because its reserved stock could not be restored.'
+            });
+        }
+        order.stockDeducted = false;
     }
     order.orderStatus = req.body.status;
     if (req.body.status === 'Completed') {
         order.deliveredAt = new Date();
     }
-    await order.save();
+    try {
+        await order.save();
+    } catch (error) {
+        if (inventoryUpdated) {
+            await adjustOrderStock(order, previousStockDeducted ? -1 : 1);
+        }
+        order.orderStatus = previousStatus;
+        order.stockDeducted = previousStockDeducted;
+        return next(error);
+    }
     let emailSent = false;
     let emailWarning;
     if (!order.user?.email) {
@@ -466,6 +555,7 @@ exports.updateOrder = async (req, res, next) => {
     return res.status(200).json({
         success: true,
         order,
+        inventoryUpdated,
         emailSent,
         ...(!emailSent && { emailWarning })
     });

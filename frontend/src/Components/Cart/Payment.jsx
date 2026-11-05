@@ -42,7 +42,6 @@ const Payment = ({ cartItems, shippingInfo, clearCart }) => {
             paymentMethod,
             itemsPrice: orderInfo?.itemsPrice || '0',
             shippingPrice: orderInfo?.shippingPrice || 0,
-            taxPrice: orderInfo?.taxPrice || 0,
             totalPrice: orderInfo?.totalPrice || '0'
         }
 

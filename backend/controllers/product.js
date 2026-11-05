@@ -487,17 +487,27 @@ exports.deleteOwnReview = async (req, res, next) => {
 }
 
 exports.getProductReviews = async (req, res, next) => {
-    const product = await Product.findById(req.query.id).select('_id');
-    if (!product) {
-        return res.status(404).json({ success: false, message: 'Product not found.' });
+    try {
+        const filter = {};
+        if (req.query.id) {
+            const product = await Product.findById(req.query.id).select('_id');
+            if (!product) {
+                return res.status(404).json({ success: false, message: 'Product not found.' });
+            }
+            filter.product = product._id;
+        }
+
+        const reviews = await Review.find(filter)
+            .populate('user', 'name')
+            .populate('product', 'name')
+            .sort({ createdAt: -1 });
+        return res.status(200).json({
+            success: true,
+            reviews
+        });
+    } catch (error) {
+        return next(error);
     }
-    const reviews = await Review.find({ product: product._id })
-        .populate('user', 'name')
-        .sort({ createdAt: -1 });
-    res.status(200).json({
-        success: true,
-        reviews
-    })
 }
 
 exports.deleteReview = async (req, res, next) => {

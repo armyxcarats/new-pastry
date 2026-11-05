@@ -16,7 +16,7 @@ const OrderDetails = () => {
     const [error, setError] = useState('')
     const [order, setOrder] = useState({})
 
-    const { shippingInfo, orderItems, paymentInfo, user, totalPrice, orderStatus } = order
+    const { shippingInfo, orderItems, paymentInfo, user, orderStatus } = order
     let { id } = useParams();
 
     const getOrderDetails = async (id) => {
@@ -53,6 +53,7 @@ const OrderDetails = () => {
     }, [error])
 
     const shippingDetails = shippingInfo && [shippingInfo.address, shippingInfo.city, shippingInfo.postalCode, shippingInfo.country].filter(Boolean).join(', ')
+    const totalPrice = Number(order.subtotal || 0) + Number(order.shippingFee || 0)
 
     const isPaid = order.paymentStatus === 'paid' || paymentInfo?.status === 'succeeded'
     const paymentMethodLabel = ({
@@ -190,7 +191,6 @@ const OrderDetails = () => {
                         <section className="order-receipt-totals" aria-label="Order totals">
                             <p><span>Subtotal</span><strong>₱{Number(order.subtotal || 0).toFixed(2)}</strong></p>
                             <p><span>Shipping</span><strong>₱{Number(order.shippingFee || 0).toFixed(2)}</strong></p>
-                            <p><span>Tax</span><strong>₱{Number(order.taxPrice || 0).toFixed(2)}</strong></p>
                             <p className="order-receipt-grand-total"><span>Total</span><strong>₱{Number(totalPrice || 0).toFixed(2)}</strong></p>
                         </section>
 

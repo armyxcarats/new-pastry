@@ -139,7 +139,7 @@ const ListOrders = () => {
     const rows = myOrdersList.map(order => ({
         id: order._id,
         numOfItems: order.orderItems.length,
-        amount: `₱${Number(order.totalPrice || 0).toFixed(2)}`,
+        amount: `₱${(Number(order.subtotal || 0) + Number(order.shippingFee || 0)).toFixed(2)}`,
         status: order.orderStatus || ''
     }));
 

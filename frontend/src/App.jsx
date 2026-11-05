@@ -125,6 +125,10 @@ function App() {
     if (!isAuthenticated || !userId) {
       return false
     }
+    if (!Number.isInteger(Number(quantity)) || Number(quantity) < 1) {
+      toast.error('Choose a valid product quantity.')
+      return false
+    }
     if (cartOwnerId !== userId) {
       toast.error(cartLoadError.userId === userId
         ? cartLoadError.message
@@ -137,6 +141,7 @@ function App() {
       const currentIdentity = cartIdentityRef.current
       if (!currentIdentity.isAuthenticated || currentIdentity.userId !== ownerIdAtRequest
         || currentIdentity.cartOwnerId !== ownerIdAtRequest) return false
+      const productStock = Number(data.product.stock) || 0
       const normalizedCustomizations = (selectedCustomizations || [])
         .map((selection) => {
           const option = (data.product.customizationOptions || []).find(
@@ -166,6 +171,25 @@ function App() {
           ].sort()
         ) === configurationKey
       ))
+      const isReducingQuantity = existingItem && Number(quantity) < Number(existingItem.quantity)
+      if ((data.product.isAvailable === false || productStock < 1) && !isReducingQuantity) {
+        toast.error(`${data.product.name} is currently out of stock.`)
+        return false
+      }
+      const otherCartQuantity = state.cartItems.reduce((total, item) => (
+        item.product === data.product._id && item.cartKey !== existingItem?.cartKey
+          ? total + Number(item.quantity || 0)
+          : total
+      ), 0)
+      const maxLineQuantity = Math.max(0, productStock - otherCartQuantity)
+      if (!isReducingQuantity && Number(quantity) > maxLineQuantity) {
+        toast.error(
+          maxLineQuantity
+            ? `Only ${maxLineQuantity} ${data.product.name} available in total. You already have ${existingItem?.quantity || 0} in your cart.`
+            : `${data.product.name} has no stock remaining for another cart item.`
+        )
+        return false
+      }
       const selectedAddOnItems = selectedAddOns ?? existingItem?.addOns ?? []
       const selectedAddOnMap = new Map(selectedAddOnItems.filter(Boolean).map((addOn) => (
         typeof addOn === 'string'
@@ -191,8 +215,8 @@ function App() {
         name: data.product.name,
         price: Number(data.product.price || 0) + customizationPrice,
         image: data.product.images?.[0]?.url || '',
-        stock: data.product.stock,
-        quantity,
+        stock: productStock,
+        quantity: Number(quantity),
         addOns: cartAddOns,
         customizations: normalizedCustomizations,
         customMessage: customMessage.trim()

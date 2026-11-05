@@ -13,6 +13,7 @@ const ProcessOrder = () => {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(true)
     const [updating, setUpdating] = useState(false)
+    const [syncingStock, setSyncingStock] = useState(false)
     const [order, setOrder] = useState(null)
     const [status, setStatus] = useState('')
 
@@ -54,6 +55,27 @@ const ProcessOrder = () => {
         }
     }
 
+    const syncCompletedOrderStock = async () => {
+        if (!window.confirm('Deduct this completed order from product stock? Use this once for older orders only.')) return
+
+        setSyncingStock(true)
+        try {
+            const { data } = await axios.put(
+                `${import.meta.env.API}/admin/order/${id}`,
+                { status: 'Completed' },
+                { withCredentials: true }
+            )
+            setOrder(data.order)
+            toast.success(data.inventoryUpdated
+                ? 'Completed order stock has been deducted.'
+                : 'Stock was already synced for this order.')
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Completed order stock could not be synced.')
+        } finally {
+            setSyncingStock(false)
+        }
+    }
+
     const shippingInfo = order?.shippingInfo || {}
     const address = [shippingInfo.address, shippingInfo.city, shippingInfo.postalCode, shippingInfo.country]
         .filter(Boolean)
@@ -81,7 +103,7 @@ const ProcessOrder = () => {
                                 <p><b>Preferred date and time:</b> {
                                     order.preferredDate ? new Date(order.preferredDate).toLocaleString() : 'Not provided'
                                 }</p>
-                                <p><b>Amount:</b> ₱{Number(order.totalPrice || 0).toFixed(2)}</p>
+                                <p><b>Amount:</b> ₱{(Number(order.subtotal || 0) + Number(order.shippingFee || 0)).toFixed(2)}</p>
 
                                 <hr />
                                 <h4 className="my-4">Payment</h4>
@@ -155,7 +177,17 @@ const ProcessOrder = () => {
                                 >
                                     {updating ? 'Updating…' : 'Update status'}
                                 </button>
-                                {isFinal && <p className="small text-muted mt-2">Completed and cancelled orders are final.</p>}
+                                {order.orderStatus === 'Completed' && !order.stockDeducted ? (
+                                    <button
+                                        className="btn btn-warning btn-block mt-3"
+                                        onClick={syncCompletedOrderStock}
+                                        disabled={syncingStock}
+                                    >
+                                        {syncingStock ? 'Syncing stock…' : 'Sync stock for this completed order'}
+                                    </button>
+                                ) : isFinal ? (
+                                    <p className="small text-muted mt-2">Completed and cancelled orders are final.</p>
+                                ) : null}
                             </div>
                         </div>
                     )}

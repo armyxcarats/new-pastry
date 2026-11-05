@@ -199,6 +199,68 @@
   background: #fffdfa;
 }
 
+.admin-dashboard-reviews {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #e8dfd2;
+  border-radius: 8px;
+  background: #fffdfa;
+}
+
+.admin-dashboard-review-list {
+  display: grid;
+}
+
+.admin-dashboard-review {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid #eee7de;
+  font-family: Arial, sans-serif;
+}
+
+.admin-dashboard-review-content {
+  min-width: 0;
+}
+
+.admin-dashboard-review-content > div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-dashboard-review-content > div > strong {
+  color: #653d2c;
+}
+
+.admin-dashboard-review-content > div > span {
+  color: #76685e;
+  font-size: 0.82rem;
+}
+
+.admin-dashboard-review-content > p {
+  margin: 0.6rem 0 0;
+  color: #38291f;
+  overflow-wrap: anywhere;
+}
+
+.admin-dashboard-review > button {
+  flex: 0 0 auto;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #a22f26;
+  border-radius: 5px;
+  background: #fffdfa;
+  color: #a22f26;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-dashboard-review > button:hover {
+  background: #a22f26;
+  color: #fffdfa;
+}
+
 .admin-dashboard-catalog {
   margin-bottom: 2rem;
 }
@@ -395,6 +457,15 @@
   .admin-dashboard-order > strong {
     grid-column: 2;
     grid-row: 1 / span 2;
+  }
+
+  .admin-dashboard-review {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-dashboard-review > button {
+    align-self: flex-start;
   }
 
   .admin-dashboard-section-heading {

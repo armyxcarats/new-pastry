@@ -427,6 +427,18 @@ footer {
   font-weight: 700;
 }
 
+.bakery-product-ribbon-sold-out {
+  background: #a22f26;
+  color: #fffdfa;
+}
+
+.bakery-product-stock-status {
+  margin: 0.6rem 0 0;
+  color: #a22f26;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .bakery-product-card .card-body {
   padding: 1.2rem;
 }

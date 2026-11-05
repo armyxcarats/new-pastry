@@ -77,8 +77,20 @@ const ProductDetails = ({ addItemToCart }) => {
     const activeImage = productImages[activeImageIndex] || productImages[0]
     const unitPrice = Number(product.price || 0) + customizationPrice + addOnPrice
     const cartTotal = unitPrice * quantity
+    const productStock = Number(product.stock) || 0
+    const canOrder = productStock > 0 && product.isAvailable !== false
 
-    const increaseQty = () => setQuantity((current) => Math.min(Number(product.stock) || 1, current + 1))
+    const increaseQty = () => {
+        if (!canOrder) {
+            toast.error('This product is currently out of stock.')
+            return
+        }
+        if (quantity >= productStock) {
+            toast.info(`Only ${productStock} ${productStock === 1 ? 'item is' : 'items are'} in stock.`)
+            return
+        }
+        setQuantity((current) => current + 1)
+    }
     const decreaseQty = () => setQuantity((current) => Math.max(1, current - 1))
 
     const addToCart = async () => {
@@ -197,6 +209,21 @@ const ProductDetails = ({ addItemToCart }) => {
         dispatch(getProductDetails(id))
 
     }, [dispatch, id]);
+
+    useEffect(() => {
+        const refreshProduct = () => {
+            if (document.visibilityState === 'visible') {
+                dispatch(getProductDetails(id))
+            }
+        }
+
+        window.addEventListener('focus', refreshProduct)
+        document.addEventListener('visibilitychange', refreshProduct)
+        return () => {
+            window.removeEventListener('focus', refreshProduct)
+            document.removeEventListener('visibilitychange', refreshProduct)
+        }
+    }, [dispatch, id])
 
     useEffect(() => {
         if (!isAuthenticated || !currentUser?._id) return undefined
@@ -394,8 +421,12 @@ const ProductDetails = ({ addItemToCart }) => {
                             <div className="rating-inner" style={{ width: `${((product.rating || 0) / 5) * 100}%` }}></div>
                         </div>
                         <span id="no_of_reviews">{product.numOfReviews || 0} reviews</span>
-                        <span className={`product-availability ${product.stock > 0 ? 'available' : 'unavailable'}`}>
-                            {product.stock > 0 ? 'Freshly available' : 'Currently sold out'}
+                        <span className={`product-availability ${canOrder ? 'available' : 'unavailable'}`}>
+                            {product.stock <= 0
+                                ? 'Currently sold out'
+                                : product.isAvailable === false
+                                    ? 'Not available to order'
+                                    : 'Freshly available'}
                         </span>
                     </div>
 
@@ -468,16 +499,20 @@ const ProductDetails = ({ addItemToCart }) => {
                     )}
                     <div className="product-purchase-row">
                         <div className="product-quantity-control" aria-label="Quantity">
-                            <button type="button" aria-label="Decrease quantity" onClick={decreaseQty} disabled={quantity <= 1}>−</button>
+                            <button type="button" aria-label="Decrease quantity" onClick={decreaseQty} disabled={!canOrder || quantity <= 1}>−</button>
                             <span aria-live="polite">{quantity}</span>
-                            <button type="button" aria-label="Increase quantity" onClick={increaseQty} disabled={quantity >= product.stock}>+</button>
+                            <button type="button" aria-label="Increase quantity" onClick={increaseQty} disabled={!canOrder}>+</button>
                         </div>
-                        <button type="button" id="cart_btn" className="product-add-to-cart" disabled={product.stock === 0} onClick={addToCart}>
-                            Add to bag · ₱{cartTotal.toFixed(2)}
+                        <button type="button" id="cart_btn" className="product-add-to-cart" disabled={!canOrder} onClick={addToCart}>
+                            {canOrder ? `Add to bag · ₱${cartTotal.toFixed(2)}` : 'Unavailable'}
                         </button>
                     </div>
                     <p className="product-detail-stock">
-                        {product.stock > 0 ? `${product.stock} available today` : 'Currently out of stock'}
+                        {product.stock <= 0
+                            ? 'Currently out of stock'
+                            : product.isAvailable === false
+                                ? 'This product is currently unavailable to order'
+                                : `${product.stock} available today`}
                     </p>
 
                     <section className="product-review-form mt-5" aria-labelledby="product-review-heading">

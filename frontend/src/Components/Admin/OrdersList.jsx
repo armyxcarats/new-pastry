@@ -106,7 +106,7 @@ const OrdersList = () => {
                                             <td>{order._id}</td>
                                             <td>{order.shippingInfo?.fullName || 'Customer'}</td>
                                             <td>{order.orderItems?.length || 0}</td>
-                                            <td>₱{Number(order.totalPrice || 0).toFixed(2)}</td>
+                                            <td>₱{(Number(order.subtotal || 0) + Number(order.shippingFee || 0)).toFixed(2)}</td>
                                             <td>{order.orderStatus}</td>
                                             <td>
                                                 <Link to={`/admin/order/${order._id}`} className="btn btn-sm btn-primary mr-2">View</Link>

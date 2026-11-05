@@ -10,6 +10,7 @@ import {
     XAxis,
     YAxis
 } from 'recharts'
+import { toast } from 'react-toastify'
 import MetaData from '../Layout/MetaData'
 import Sidebar from './SideBar'
 import './Dashboard.css'
@@ -88,7 +89,8 @@ const Dashboard = () => {
         revenue: 0,
         customerRecords: [],
         orderRecords: [],
-        recentOrders: []
+        recentOrders: [],
+        reviews: []
     })
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -98,10 +100,11 @@ const Dashboard = () => {
 
         const loadDashboard = async () => {
             try {
-                const [productsResponse, ordersResponse, usersResponse] = await Promise.all([
+                const [productsResponse, ordersResponse, usersResponse, reviewsResponse] = await Promise.all([
                     axios.get(`${import.meta.env.API}/admin/products`, { withCredentials: true }),
                     axios.get(`${import.meta.env.API}/admin/orders`, { withCredentials: true }),
-                    axios.get(`${import.meta.env.API}/admin/users`, { withCredentials: true })
+                    axios.get(`${import.meta.env.API}/admin/users`, { withCredentials: true }),
+                    axios.get(`${import.meta.env.API}/reviews`, { withCredentials: true })
                 ])
 
                 if (!isCurrent) return
@@ -121,7 +124,8 @@ const Dashboard = () => {
                     revenue: Number(ordersResponse.data.totalAmount || 0),
                     customerRecords: customers,
                     orderRecords: orders,
-                    recentOrders
+                    recentOrders,
+                    reviews: reviewsResponse.data.reviews || []
                 })
             } catch (requestError) {
                 if (isCurrent) {
@@ -141,6 +145,30 @@ const Dashboard = () => {
             isCurrent = false
         }
     }, [])
+
+    const deleteReview = async (review) => {
+        if (!window.confirm('Delete this product review? This cannot be undone.')) return
+
+        const productId = review.product?._id || review.product
+        if (!productId) {
+            toast.error('The product for this review could not be found.')
+            return
+        }
+
+        try {
+            await axios.delete(
+                `${import.meta.env.API}/reviews?id=${encodeURIComponent(review._id)}&productId=${encodeURIComponent(productId)}`,
+                { withCredentials: true }
+            )
+            setSummary((current) => ({
+                ...current,
+                reviews: current.reviews.filter((item) => item._id !== review._id)
+            }))
+            toast.success('Review deleted.')
+        } catch (requestError) {
+            toast.error(requestError.response?.data?.message || 'Review could not be deleted.')
+        }
+    }
 
     const productsByCategory = summary.catalog.reduce((groups, product) => {
         const categoryName = product.category?.name || 'Uncategorized'
@@ -407,12 +435,45 @@ const Dashboard = () => {
                                         <span className="admin-dashboard-order-status">
                                             {order.orderStatus || 'Pending'}
                                         </span>
-                                        <strong>{currency.format(Number(order.totalPrice || 0))}</strong>
+                                        <strong>{currency.format(Number(order.subtotal || 0) + Number(order.shippingFee || 0))}</strong>
                                     </article>
                                 ))}
                             </div>
                         ) : (
                             <p className="admin-dashboard-message">No orders have been placed yet.</p>
+                        )}
+                    </section>
+
+                    <section className="admin-dashboard-reviews" aria-labelledby="admin-recent-reviews">
+                        <div className="admin-dashboard-section-heading">
+                            <div>
+                                <p className="admin-dashboard-eyebrow">CUSTOMER FEEDBACK</p>
+                                <h2 id="admin-recent-reviews">Recent product reviews</h2>
+                            </div>
+                            <Link to="/admin/reviews">Manage all reviews <span aria-hidden="true">&rarr;</span></Link>
+                        </div>
+
+                        {loading ? (
+                            <p className="admin-dashboard-message">Loading reviews...</p>
+                        ) : summary.reviews.length ? (
+                            <div className="admin-dashboard-review-list">
+                                {summary.reviews.slice(0, 5).map((review) => (
+                                    <article className="admin-dashboard-review" key={review._id}>
+                                        <div className="admin-dashboard-review-content">
+                                            <div>
+                                                <strong>{review.product?.name || 'Product unavailable'}</strong>
+                                                <span>{review.rating} / 5 · {review.user?.name || 'Customer'} · {formatDate(review.createdAt)}</span>
+                                            </div>
+                                            <p>{review.comment}</p>
+                                        </div>
+                                        <button type="button" onClick={() => deleteReview(review)}>
+                                            Delete
+                                        </button>
+                                    </article>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="admin-dashboard-message">No product reviews have been submitted yet.</p>
                         )}
                     </section>
                 </section>

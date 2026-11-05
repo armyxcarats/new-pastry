@@ -15,14 +15,12 @@ const ConfirmOrder = ({ cartItems, shippingInfo }) => {
     const itemsPrice = cartItems.reduce((acc, item) => acc + getItemUnitPrice(item) * item.quantity, 0)
     const isDelivery = shippingInfo.orderType !== 'pickup'
     const shippingPrice = !isDelivery || itemsPrice > 200 ? 0 : 25
-    const taxPrice = Number((0.05 * itemsPrice).toFixed(2))
-    const totalPrice = (itemsPrice + shippingPrice + taxPrice).toFixed(2)
+    const totalPrice = (itemsPrice + shippingPrice).toFixed(2)
 
     const processToPayment = () => {
         const data = {
             itemsPrice: itemsPrice.toFixed(2),
             shippingPrice,
-            taxPrice,
             totalPrice
         }
 
@@ -108,8 +106,6 @@ const ConfirmOrder = ({ cartItems, shippingInfo }) => {
                         <hr />
                         <p>Subtotal:  <span className="order-summary-values">₱{itemsPrice.toFixed(2)}</span></p>
                         <p>Shipping: <span className="order-summary-values">₱{shippingPrice.toFixed(2)}</span></p>
-                        <p>Tax:  <span className="order-summary-values">₱{taxPrice.toFixed(2)}</span></p>
-
                         <hr />
 
                         <p>Total: <span className="order-summary-values">₱{totalPrice}</span></p>

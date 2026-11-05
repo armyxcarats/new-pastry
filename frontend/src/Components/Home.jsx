@@ -87,6 +87,21 @@ const Home = () => {
         dispatch(getProducts(currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter, sortBy))
     }, [currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter, sortBy, dispatch]);
 
+    useEffect(() => {
+        const refreshProducts = () => {
+            if (document.visibilityState === 'visible') {
+                dispatch(getProducts(currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter, sortBy))
+            }
+        }
+
+        window.addEventListener('focus', refreshProducts)
+        document.addEventListener('visibilitychange', refreshProducts)
+        return () => {
+            window.removeEventListener('focus', refreshProducts)
+            document.removeEventListener('visibilitychange', refreshProducts)
+        }
+    }, [currentPage, keyword, price, activeCategory, ratingFilter, reviewFilter, sortBy, dispatch])
+
     return (
         <>
             <MetaData title={'shop Here'} />
