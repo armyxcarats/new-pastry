@@ -106,7 +106,7 @@ const OrderDetails = () => {
                                         onClick={downloadReceipt}
                                         disabled={downloadingReceipt}
                                     >
-                                        {downloadingReceipt ? 'Preparing PDF…' : 'Download PDF'}
+                                        {downloadingReceipt ? 'Preparing receipt…' : 'Download Receipt'}
                                     </button>
                                     <button type="button" className="btn btn-outline-primary" onClick={printReceipt}>
                                         Print

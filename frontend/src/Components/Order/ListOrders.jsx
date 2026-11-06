@@ -127,9 +127,9 @@ const ListOrders = () => {
                         size="small"
                         onClick={() => downloadReceipt(params.id)}
                         disabled={downloadingReceiptId === params.id}
-                        aria-label={`Download PDF receipt for order ${params.id}`}
+                        aria-label={`Download receipt for order ${params.id}`}
                     >
-                        {downloadingReceiptId === params.id ? 'PDF…' : 'PDF'}
+                        {downloadingReceiptId === params.id ? 'Preparing…' : 'Download Receipt'}
                     </Button>
                 </div>
             )
