@@ -108,16 +108,17 @@ const ListOrders = () => {
         {
             field: 'actions',
             headerName: 'Actions',
-            width: 210,
+            width: 280,
             sortable: false,
             filterable: false,
             renderCell: (params) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%', flexWrap: 'nowrap' }}>
                     <Button
                         component={Link}
                         to={`/order/${params.id}`}
                         variant="contained"
                         size="small"
+                        sx={{ minWidth: 72, px: 1 }}
                         aria-label={`View order ${params.id}`}
                     >
                         <i className="fa fa-eye" />
@@ -125,6 +126,7 @@ const ListOrders = () => {
                     <Button
                         variant="outlined"
                         size="small"
+                        sx={{ minWidth: 180, px: 1.5, whiteSpace: 'nowrap' }}
                         onClick={() => downloadReceipt(params.id)}
                         disabled={downloadingReceiptId === params.id}
                         aria-label={`Download receipt for order ${params.id}`}
