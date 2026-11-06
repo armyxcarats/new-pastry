@@ -183,6 +183,22 @@ Run these from the project root unless a directory is specified.
 Do not commit environment files, private keys, database credentials, or other
 secrets. The frontend `.env.example` contains variable names, not working values.
 
+### Deployment database
+
+The Vercel frontend proxies `/api/v1` requests to the Render API configured in
+`frontend/vercel.json`. The admin dashboard reads products, orders, users, and
+reviews from the database connected to that deployed API; it does not read the
+database on your development computer.
+
+Set Render's `DB_URI` to the persistent MongoDB database containing the records
+you want the deployed site to show. If local development currently uses a local
+MongoDB database, first migrate the records you need to a persistent hosted
+database, then point Render to it. Production does not automatically create the
+development demo catalog or copy local records. Do not run `backend/seeder.js`
+against a database with records you need to preserve; it recreates collections.
+After changing Render's environment, redeploy the API and refresh the Vercel
+site.
+
 ## Request flow
 
 The browser entry point is `frontend/src/main.jsx`; routes and shared app state
