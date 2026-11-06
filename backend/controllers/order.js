@@ -1,9 +1,12 @@
 const Order = require('../models/order');
 const Product = require('../models/product');
 const PDFDocument = require('pdfkit');
+const fontkit = require('fontkit');
 const sendEmail = require('../utils/sendEmail');
 const RECEIPT_FONT = require.resolve('@fontsource/noto-sans/files/noto-sans-latin-400-normal.woff');
 const RECEIPT_CURRENCY_FONT = require.resolve('@fontsource/noto-sans/files/noto-sans-latin-ext-400-normal.woff');
+const RECEIPT_CURRENCY_FONT_DATA = fontkit.openSync(RECEIPT_CURRENCY_FONT);
+const RECEIPT_PESO_GLYPH = RECEIPT_CURRENCY_FONT_DATA.glyphForCodePoint(0x20b1);
 const MINIMUM_LEAD_TIME_MS = 48 * 60 * 60 * 1000;
 const ORDER_STATUSES = ['Pending', 'Confirmed', 'Baking', 'Ready', 'Completed', 'Cancelled'];
 
@@ -58,9 +61,31 @@ const escapeHtml = (value) => String(value ?? '')
     .replace(/'/g, '&#39;');
 
 const formatCurrency = (value) => `₱${Number(value || 0).toFixed(2)}`;
-const writePdfCurrency = (doc, value) => {
-    doc.font(RECEIPT_CURRENCY_FONT).text('₱', { continued: true });
-    doc.font(RECEIPT_FONT).text(Number(value || 0).toFixed(2));
+const writePdfCurrency = (doc, value, label = '', fontSize = 12) => {
+    const formattedValue = Number(value || 0).toFixed(2);
+    const scale = fontSize / RECEIPT_CURRENCY_FONT_DATA.unitsPerEm;
+    doc.font(RECEIPT_FONT).fontSize(fontSize);
+    const startX = doc.x;
+    const startY = doc.y;
+    const labelWidth = doc.widthOfString(label);
+    const valueWidth = doc.widthOfString(formattedValue);
+    const symbolWidth = RECEIPT_PESO_GLYPH.advanceWidth * scale;
+    const availableWidth = doc.page.width - doc.page.margins.right - startX;
+    const displayedLabel = labelWidth + symbolWidth + valueWidth <= availableWidth ? label : '';
+
+    // Draw the glyph as a path because PDFKit does not embed this WOFF character reliably.
+    doc.text(displayedLabel, startX, startY, { lineBreak: false });
+    const currencyX = startX + doc.widthOfString(displayedLabel);
+    doc.save()
+        .translate(currencyX, startY + RECEIPT_CURRENCY_FONT_DATA.ascent * scale)
+        .scale(scale, -scale)
+        .path(RECEIPT_PESO_GLYPH.path.toSVG())
+        .fill()
+        .restore();
+
+    doc.text(formattedValue, currencyX + symbolWidth, startY, { lineBreak: false });
+    doc.x = startX;
+    doc.y = startY + doc.currentLineHeight(true);
 };
 
 const getPaymentMethodLabel = (method) => ({
@@ -107,8 +132,7 @@ const buildOrderReceiptPdf = async (order) => {
 
         doc.fontSize(14).text('Items');
         order.orderItems.forEach((item, index) => {
-            doc.text(`${index + 1}. ${item.name} x${item.quantity} - `, { continued: true });
-            writePdfCurrency(doc, item.subtotal);
+            writePdfCurrency(doc, item.subtotal, `${index + 1}. ${item.name} x${item.quantity} - `, 14);
             const customizations = item.selectedOptions?.customizations || [];
             if (customizations.length) {
                 doc.text(`   Options: ${customizations.map((option) => `${option.name}: ${option.label}`).join(', ')}`);
@@ -124,12 +148,9 @@ const buildOrderReceiptPdf = async (order) => {
         });
 
         doc.moveDown();
-        doc.fontSize(12).text('Subtotal: ', { continued: true });
-        writePdfCurrency(doc, order.subtotal);
-        doc.text('Delivery: ', { continued: true });
-        writePdfCurrency(doc, order.shippingFee);
-        doc.fontSize(14).text('Grand Total: ', { continued: true });
-        writePdfCurrency(doc, Number(order.subtotal || 0) + Number(order.shippingFee || 0));
+        writePdfCurrency(doc, order.subtotal, 'Subtotal: ');
+        writePdfCurrency(doc, order.shippingFee, 'Delivery: ');
+        writePdfCurrency(doc, Number(order.subtotal || 0) + Number(order.shippingFee || 0), 'Grand Total: ', 14);
         doc.end();
     });
 };
