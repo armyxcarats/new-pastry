@@ -4,6 +4,7 @@ import Sidebar from './SideBar'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { DataGrid } from '@mui/x-data-grid'
+import { fetchProductReviews } from './reviewApi'
 
 const ProductReviews = () => {
     const [productId, setProductId] = useState('')
@@ -11,69 +12,11 @@ const ProductReviews = () => {
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
 
-    const fetchProductReviews = useCallback(async (id = '') => {
-        const params = new URLSearchParams()
-        if (id.trim()) params.set('id', id.trim())
-        const query = params.toString()
-        const requestConfig = { withCredentials: true }
-        const getReviewsByProduct = async () => {
-            const { data: productsData } = await axios.get(
-                `${import.meta.env.API}/admin/products`,
-                requestConfig
-            )
-            if (!Array.isArray(productsData.products)) {
-                throw new Error('The products API returned an unexpected response.')
-            }
-
-            const productReviews = await Promise.all(productsData.products.map(async (product) => {
-                const { data: reviewsData } = await axios.get(
-                    `${import.meta.env.API}/reviews?id=${encodeURIComponent(product._id)}`,
-                    requestConfig
-                )
-                if (!Array.isArray(reviewsData.reviews)) {
-                    throw new Error(`The reviews API returned an unexpected response for ${product.name}.`)
-                }
-
-                return reviewsData.reviews.map((review) => ({
-                    ...review,
-                    product: review.product?.name
-                        ? review.product
-                        : { _id: product._id, name: product.name }
-                }))
-            }))
-
-            return productReviews.flat().sort(
-                (first, second) => new Date(second.createdAt) - new Date(first.createdAt)
-            )
-        }
-
-        let data
-        try {
-            ({ data } = await axios.get(
-                `${import.meta.env.API}/reviews${query ? `?${query}` : ''}`,
-                requestConfig
-            ))
-        } catch (error) {
-            const needsProductFilter = error.response?.status === 404
-                && error.response?.data?.message === 'Product not found.'
-            if (id.trim() || !needsProductFilter) {
-                return Promise.reject(error)
-            }
-
-            return getReviewsByProduct()
-        }
-
-        if (!Array.isArray(data.reviews)) {
-            throw new Error('The reviews API returned an unexpected response.')
-        }
-        return data.reviews
-    }, [])
-
     const getProductReviews = useCallback(async (id = '') => {
         setLoading(true)
         setLoadError('')
         try {
-            setReviews(await fetchProductReviews(id))
+            setReviews(await fetchProductReviews({ id }))
         } catch (error) {
             setReviews([])
             const message = error.response?.data?.message || error.message || 'Reviews could not be loaded.'
@@ -82,7 +25,7 @@ const ProductReviews = () => {
         } finally {
             setLoading(false)
         }
-    }, [fetchProductReviews])
+    }, [])
 
     useEffect(() => {
         let isCurrent = true
@@ -108,7 +51,7 @@ const ProductReviews = () => {
         return () => {
             isCurrent = false
         }
-    }, [fetchProductReviews])
+    }, [])
 
     const deleteReview = async (reviewId) => {
         const review = reviews.find((item) => item._id === reviewId)

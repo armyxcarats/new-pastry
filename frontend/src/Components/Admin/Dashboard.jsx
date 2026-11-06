@@ -13,6 +13,7 @@ import {
 import { toast } from 'react-toastify'
 import MetaData from '../Layout/MetaData'
 import Sidebar from './SideBar'
+import { fetchProductReviews } from './reviewApi'
 import './Dashboard.css'
 
 const currency = new Intl.NumberFormat('en-PH', {
@@ -93,18 +94,19 @@ const Dashboard = () => {
         reviews: []
     })
     const [loading, setLoading] = useState(true)
+    const [reviewsLoading, setReviewsLoading] = useState(true)
     const [error, setError] = useState('')
+    const [reviewsError, setReviewsError] = useState('')
 
     useEffect(() => {
         let isCurrent = true
 
         const loadDashboard = async () => {
             try {
-                const [productsResponse, ordersResponse, usersResponse, reviewsResponse] = await Promise.all([
+                const [productsResponse, ordersResponse, usersResponse] = await Promise.all([
                     axios.get(`${import.meta.env.API}/admin/products`, { withCredentials: true }),
                     axios.get(`${import.meta.env.API}/admin/orders`, { withCredentials: true }),
-                    axios.get(`${import.meta.env.API}/admin/users`, { withCredentials: true }),
-                    axios.get(`${import.meta.env.API}/reviews`, { withCredentials: true })
+                    axios.get(`${import.meta.env.API}/admin/users`, { withCredentials: true })
                 ])
 
                 if (!isCurrent) return
@@ -125,15 +127,34 @@ const Dashboard = () => {
                     customerRecords: customers,
                     orderRecords: orders,
                     recentOrders,
-                    reviews: reviewsResponse.data.reviews || []
+                    reviews: []
                 })
+                setLoading(false)
+
+                try {
+                    const reviews = await fetchProductReviews({ products })
+                    if (isCurrent) {
+                        setSummary((current) => ({ ...current, reviews }))
+                        setReviewsError('')
+                    }
+                } catch (reviewRequestError) {
+                    if (isCurrent) {
+                        setReviewsError(
+                            reviewRequestError.response?.data?.message
+                            || 'Recent product reviews could not be loaded.'
+                        )
+                    }
+                } finally {
+                    if (isCurrent) setReviewsLoading(false)
+                }
             } catch (requestError) {
                 if (isCurrent) {
                     setError(
                         requestError.response?.data?.message
                         || 'The admin dashboard could not load. Please try again.'
                     )
-                }
+                        setReviewsLoading(false)
+                    }
             } finally {
                 if (isCurrent) setLoading(false)
             }
@@ -453,8 +474,10 @@ const Dashboard = () => {
                             <Link to="/admin/reviews">Manage all reviews <span aria-hidden="true">&rarr;</span></Link>
                         </div>
 
-                        {loading ? (
+                        {reviewsLoading ? (
                             <p className="admin-dashboard-message">Loading reviews...</p>
+                        ) : reviewsError ? (
+                            <p className="admin-dashboard-error" role="alert">{reviewsError}</p>
                         ) : summary.reviews.length ? (
                             <div className="admin-dashboard-review-list">
                                 {summary.reviews.slice(0, 5).map((review) => (
